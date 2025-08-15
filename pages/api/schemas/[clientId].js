@@ -7,21 +7,56 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { clientId } = req.query
+    const { clientId, page = 1, limit = 10 } = req.query
+    
+    // Convert to numbers and validate
+    const pageNum = Math.max(1, parseInt(page))
+    const limitNum = Math.min(50, Math.max(1, parseInt(limit))) // Max 50 per page
+    const skip = (pageNum - 1) * limitNum
 
     const { db } = await connectToDatabase()
 
-    // Start from schema_pages to get ALL pages, then left join with schemas and approvals
+    // First get total count for pagination - handle both ObjectId and string client_ids
+    const totalCountPipeline = [
+      { 
+        $match: { 
+          $or: [
+            { client_id: new ObjectId(clientId) },
+            { client_id: clientId }
+          ]
+        } 
+      },
+      { $count: "total" }
+    ]
+    
+    const totalResult = await db.collection('schema_pages').aggregate(totalCountPipeline).toArray()
+    const totalPages = totalResult[0]?.total || 0
+
+    // Start from schema_pages to get pages with pagination, then left join with schemas and approvals
     const pipeline = [
-      // Start with all pages for this client
-      { $match: { client_id: new ObjectId(clientId) } },
+      // Start with all pages for this client - handle both ObjectId and string client_ids
+      { 
+        $match: { 
+          $or: [
+            { client_id: new ObjectId(clientId) },
+            { client_id: clientId }
+          ]
+        } 
+      },
       
-      // Left join with schema_definitions to get schemas (if any)
+      // Sort by URL first for consistent pagination
+      { $sort: { url: 1 } },
+      
+      // Add pagination
+      { $skip: skip },
+      { $limit: limitNum },
+      
+      // Left join with schema_definitions to get schemas (if any) - JOIN BY URL
       {
         $lookup: {
           from: 'schema_definitions',
-          localField: '_id',
-          foreignField: 'page_id',
+          localField: 'url',
+          foreignField: 'url',
           as: 'schemas'
         }
       },
@@ -132,15 +167,12 @@ export default async function handler(req, res) {
             }
           }
         }
-      },
-      
-      // Sort by URL
-      { $sort: { _id: 1 } }
+      }
     ]
 
     const pages = await db.collection('schema_pages').aggregate(pipeline).toArray()
 
-    // Calculate statistics
+    // Calculate statistics for current page
     const totalSchemas = pages.reduce((acc, page) => acc + (page.schemas?.length || 0), 0)
     const pendingSchemas = pages.reduce((acc, page) => 
       acc + (page.schemas?.filter(s => s.approval_status === 'pending').length || 0), 0
@@ -149,13 +181,71 @@ export default async function handler(req, res) {
       acc + (page.schemas?.filter(s => s.approval_status === 'approved').length || 0), 0
     )
 
+    // Calculate overall stats for the client (needed for dashboard summary)
+    const overallStatsPipeline = [
+      { 
+        $match: { 
+          $or: [
+            { client_id: new ObjectId(clientId) },
+            { client_id: clientId }
+          ]
+        } 
+      },
+      {
+        $lookup: {
+          from: 'schema_definitions',
+          localField: 'url',
+          foreignField: 'url',
+          as: 'schemas'
+        }
+      },
+      {
+        $lookup: {
+          from: 'schema_approvals',
+          let: { schema_ids: '$schemas._id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$schema_id', '$$schema_ids'] }
+              }
+            }
+          ],
+          as: 'all_approvals'
+        }
+      }
+    ]
+    
+    const allPagesForStats = await db.collection('schema_pages').aggregate(overallStatsPipeline).toArray()
+    
+    const overallTotalSchemas = allPagesForStats.reduce((acc, page) => acc + (page.schemas?.length || 0), 0)
+    const overallPendingSchemas = allPagesForStats.reduce((acc, page) => {
+      return acc + (page.schemas?.filter(schema => {
+        const approval = page.all_approvals?.find(a => a.schema_id.equals(schema._id))
+        return !approval || approval.approval_status === 'pending'
+      }).length || 0)
+    }, 0)
+    const overallApprovedSchemas = allPagesForStats.reduce((acc, page) => {
+      return acc + (page.schemas?.filter(schema => {
+        const approval = page.all_approvals?.find(a => a.schema_id.equals(schema._id))
+        return approval && approval.approval_status === 'approved'
+      }).length || 0)
+    }, 0)
+
     res.status(200).json({ 
       pages,
+      pagination: {
+        currentPage: pageNum,
+        totalPages: Math.ceil(totalPages / limitNum),
+        totalRecords: totalPages,
+        recordsPerPage: limitNum,
+        hasNextPage: pageNum < Math.ceil(totalPages / limitNum),
+        hasPrevPage: pageNum > 1
+      },
       stats: {
-        total_pages: pages.length,
-        total_schemas: totalSchemas,
-        pending_schemas: pendingSchemas,
-        approved_schemas: approvedSchemas
+        total_pages: totalPages, // Overall total
+        total_schemas: overallTotalSchemas, // Overall total
+        pending_schemas: overallPendingSchemas, // Overall total
+        approved_schemas: overallApprovedSchemas // Overall total
       }
     })
   } catch (error) {

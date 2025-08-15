@@ -45,41 +45,22 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
   useEffect(() => {
     // Initialize edited fields with current values
     const initialFields = {}
+    
+    // Create fields from existing editable_fields or schema_data
     if (schema.editable_fields) {
       Object.entries(schema.editable_fields).forEach(([key, field]) => {
-        initialFields[key] = field.value
+        initialFields[key] = typeof field === 'object' && field !== null ? field.value : field
       })
-    }
-    
-    // If we have schema_data, try to get complete values from there
-    if (schema.schema_data) {
-      // Extract complete values from schema_data for common fields
+    } else if (schema.schema_data) {
+      // Create basic editable fields from schema_data if editable_fields don't exist
       const schemaData = schema.schema_data
       
-      // Map common schema fields to their paths in the JSON
-      const fieldMappings = {
-        name: schemaData.name,
-        description: schemaData.description,
-        category: schemaData.category,
-        brand: schemaData.brand?.name,
-        offers: schemaData.offers,
-        url: schemaData.url,
-        image: schemaData.image,
-        aggregateRating: schemaData.aggregateRating
-      }
-      
-      // Override with complete data from schema_data if available
-      Object.entries(fieldMappings).forEach(([fieldName, value]) => {
-        if (value !== undefined && schema.editable_fields?.[fieldName]) {
-          initialFields[fieldName] = value
-        }
-      })
-      
-      // Add additional fields that might be missing
-      const additionalFields = generateAdditionalFields(schemaData)
-      Object.entries(additionalFields).forEach(([fieldName, fieldConfig]) => {
-        initialFields[fieldName] = fieldConfig.value
-      })
+      if (schemaData.name) initialFields.name = schemaData.name
+      if (schemaData.description) initialFields.description = schemaData.description
+      if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
+      if (schemaData.areaServed) initialFields.areaServed = schemaData.areaServed
+      if (schemaData.image) initialFields.image = schemaData.image
+      if (schemaData.offers?.description) initialFields.offersDescription = schemaData.offers.description
     }
     
     setEditedFields(initialFields)
@@ -106,16 +87,90 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
   }
 
   const getAllEditableFields = () => {
-    const allFields = { ...schema.editable_fields }
+    // Start with existing editable_fields or empty object
+    const allFields = { ...(schema.editable_fields || {}) }
+    
+    // If no editable_fields exist, create them from schema_data
+    if (!schema.editable_fields && schema.schema_data) {
+      const schemaData = schema.schema_data
+      
+      // Create editable fields from common schema properties
+      if (schemaData.name) {
+        allFields.name = {
+          value: schemaData.name,
+          field_type: 'text',
+          editable: true,
+          description: 'Service/Product name'
+        }
+      }
+      
+      if (schemaData.description) {
+        allFields.description = {
+          value: schemaData.description,
+          field_type: 'textarea',
+          editable: true,
+          description: 'Service/Product description'
+        }
+      }
+      
+      if (schemaData.serviceType) {
+        allFields.serviceType = {
+          value: schemaData.serviceType,
+          field_type: 'text',
+          editable: true,
+          description: 'Type of service'
+        }
+      }
+      
+      if (schemaData.areaServed) {
+        allFields.areaServed = {
+          value: Array.isArray(schemaData.areaServed) ? schemaData.areaServed : [schemaData.areaServed.name || schemaData.areaServed],
+          field_type: 'array',
+          editable: true,
+          description: 'Geographic areas served'
+        }
+      }
+      
+      if (schemaData.image) {
+        allFields.image = {
+          value: schemaData.image,
+          field_type: 'url',
+          editable: true,
+          description: 'Service/Product image URL'
+        }
+      }
+      
+      if (schemaData.offers?.description) {
+        allFields.offersDescription = {
+          value: schemaData.offers.description,
+          field_type: 'textarea',
+          editable: true,
+          description: 'Service offering description'
+        }
+      }
+    }
     
     if (schema.schema_data) {
       const additionalFields = generateAdditionalFields(schema.schema_data)
       Object.assign(allFields, additionalFields)
     }
     
-    // Force all fields to be editable in the editor
+    // Force all fields to be editable in the editor - but handle primitive values safely
     Object.keys(allFields).forEach(fieldName => {
-      allFields[fieldName].editable = true
+      const field = allFields[fieldName]
+      
+      // If field is a primitive value, convert it to a field object
+      if (typeof field !== 'object' || field === null) {
+        allFields[fieldName] = {
+          value: field,
+          field_type: typeof field === 'string' && field.includes('T') && field.includes('Z') ? 'datetime' : 'text',
+          editable: true,
+          description: fieldName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+        }
+      } else {
+        // Field is already an object, just ensure it's editable
+        allFields[fieldName].editable = true
+      }
     })
     
     return allFields

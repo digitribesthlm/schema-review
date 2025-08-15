@@ -12,9 +12,12 @@ export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [pages, setPages] = useState([])
   const [stats, setStats] = useState({})
+  const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedSchema, setSelectedSchema] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [recordsPerPage] = useState(10) // Can make this adjustable later
 
   useEffect(() => {
     checkAuth()
@@ -24,7 +27,7 @@ export default function Dashboard() {
     if (clientId && user) {
       fetchSchemas()
     }
-  }, [clientId, user])
+  }, [clientId, user, currentPage])
 
   const checkAuth = async () => {
     const token = Cookies.get('auth-token')
@@ -54,12 +57,14 @@ export default function Dashboard() {
   const fetchSchemas = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/schemas/${clientId}`)
+      const response = await fetch(`/api/schemas/${clientId}?page=${currentPage}&limit=${recordsPerPage}`)
       
       if (response.ok) {
         const data = await response.json()
+        
         setPages(data.pages)
         setStats(data.stats)
+        setPagination(data.pagination)
       } else {
         toast.error('Failed to load schemas')
       }
@@ -68,6 +73,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
+    window.scrollTo(0, 0) // Scroll to top when changing pages
   }
 
   const handleEditSchema = (schema) => {
@@ -164,6 +174,105 @@ export default function Dashboard() {
     if (filterStatus === 'all') return true
     return schema.approval_status === filterStatus
   })
+
+  // Pagination component
+  const PaginationControls = () => {
+    if (!pagination.totalPages || pagination.totalPages <= 1) return null
+    
+    const pageNumbers = []
+    const maxPagesToShow = 5
+    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxPagesToShow / 2))
+    let endPage = Math.min(pagination.totalPages, startPage + maxPagesToShow - 1)
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1)
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(i)
+    }
+
+    return (
+      <div className="flex items-center justify-between mt-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-hubspot-gray">
+            Page {pagination.currentPage} of {pagination.totalPages} 
+            ({pagination.totalRecords} total pages)
+          </span>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {/* Previous Button */}
+          <button
+            onClick={() => handlePageChange(pagination.currentPage - 1)}
+            disabled={!pagination.hasPrevPage}
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              pagination.hasPrevPage
+                ? 'bg-hubspot-orange text-white hover:bg-orange-600'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Previous
+          </button>
+
+          {/* Page Numbers */}
+          <div className="flex space-x-1">
+            {startPage > 1 && (
+              <>
+                <button
+                  onClick={() => handlePageChange(1)}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-hubspot-gray hover:bg-gray-50"
+                >
+                  1
+                </button>
+                {startPage > 2 && <span className="px-2 py-2 text-hubspot-gray">...</span>}
+              </>
+            )}
+            
+            {pageNumbers.map(pageNum => (
+              <button
+                key={pageNum}
+                onClick={() => handlePageChange(pageNum)}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${
+                  pageNum === pagination.currentPage
+                    ? 'bg-hubspot-orange text-white'
+                    : 'text-hubspot-gray hover:bg-gray-50'
+                }`}
+              >
+                {pageNum}
+              </button>
+            ))}
+            
+            {endPage < pagination.totalPages && (
+              <>
+                {endPage < pagination.totalPages - 1 && <span className="px-2 py-2 text-hubspot-gray">...</span>}
+                <button
+                  onClick={() => handlePageChange(pagination.totalPages)}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-hubspot-gray hover:bg-gray-50"
+                >
+                  {pagination.totalPages}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Next Button */}
+          <button
+            onClick={() => handlePageChange(pagination.currentPage + 1)}
+            disabled={!pagination.hasNextPage}
+            className={`px-3 py-2 rounded-md text-sm font-medium ${
+              pagination.hasNextPage
+                ? 'bg-hubspot-orange text-white hover:bg-orange-600'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -264,6 +373,16 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* Current Page Info */}
+          {pagination.totalPages > 1 && (
+            <div className="mb-4">
+              <div className="text-sm text-hubspot-gray bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 w-fit">
+                Showing page {pagination.currentPage} of {pagination.totalPages} 
+                ({filteredSchemas.length} schemas on this page)
+              </div>
+            </div>
+          )}
+
           {/* Schemas List */}
           {filteredSchemas.length === 0 ? (
             <div className="card">
@@ -272,12 +391,12 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <h3 className="text-lg font-medium text-hubspot-dark mb-2">
-                  {filterStatus === 'all' ? 'No schemas found' : `No ${filterStatus} schemas`}
+                  {filterStatus === 'all' ? 'No schemas found on this page' : `No ${filterStatus} schemas on this page`}
                 </h3>
                 <p className="text-hubspot-gray">
                   {filterStatus === 'all' 
-                    ? 'No schemas have been generated yet.' 
-                    : `No schemas with ${filterStatus} status.`
+                    ? 'Try navigating to other pages or check if data has been loaded.' 
+                    : `No schemas with ${filterStatus} status on this page. Try other pages.`
                   }
                 </p>
               </div>
@@ -317,6 +436,9 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+
+          {/* Pagination Controls */}
+          <PaginationControls />
         </div>
       </div>
 

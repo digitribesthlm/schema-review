@@ -26,27 +26,189 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
   }
 
   const getPreviewFields = () => {
-    if (!schema.editable_fields) return []
-    // Show more fields in preview - up to 6 instead of 3
-    const fields = Object.entries(schema.editable_fields).slice(0, 6)
-    return fields.map(([key, field]) => ({
-      key,
-      label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-      value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
-      editable: field.editable
-    }))
+    // If we have editable_fields, use them
+    if (schema.editable_fields) {
+      const fields = Object.entries(schema.editable_fields).slice(0, 6)
+      return fields.map(([key, field]) => ({
+        key,
+        label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+        value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
+        editable: field.editable
+      }))
+    }
+    
+    // If no editable_fields, create preview from schema_data
+    if (schema.schema_data) {
+      const schemaData = schema.schema_data
+      const previewFields = []
+      
+      if (schemaData.name) {
+        previewFields.push({
+          key: 'name',
+          label: 'Name',
+          value: schemaData.name,
+          editable: true
+        })
+      }
+      
+      if (schemaData.description) {
+        previewFields.push({
+          key: 'description', 
+          label: 'Description',
+          value: schemaData.description.length > 100 ? 
+            schemaData.description.substring(0, 100) + '...' : 
+            schemaData.description,
+          editable: true
+        })
+      }
+      
+      if (schemaData.serviceType) {
+        previewFields.push({
+          key: 'serviceType',
+          label: 'Service Type', 
+          value: schemaData.serviceType,
+          editable: true
+        })
+      }
+      
+      if (schemaData.areaServed) {
+        const areaValue = Array.isArray(schemaData.areaServed) ? 
+          schemaData.areaServed.join(', ') : 
+          (schemaData.areaServed.name || schemaData.areaServed)
+        previewFields.push({
+          key: 'areaServed',
+          label: 'Area Served',
+          value: areaValue,
+          editable: true
+        })
+      }
+      
+      if (schemaData.offers?.description) {
+        previewFields.push({
+          key: 'offersDescription',
+          label: 'Offers Description',
+          value: schemaData.offers.description,
+          editable: true
+        })
+      }
+      
+      if (schemaData.image) {
+        previewFields.push({
+          key: 'image',
+          label: 'Image',
+          value: schemaData.image,
+          editable: true
+        })
+      }
+      
+      return previewFields.slice(0, 6) // Limit to 6 fields for preview
+    }
+    
+    return []
   }
 
   const getAllFields = () => {
-    if (!schema.editable_fields) return []
-    return Object.entries(schema.editable_fields).map(([key, field]) => ({
-      key,
-      label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-      value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
-      editable: field.editable,
-      fieldType: field.field_type,
-      description: field.description
-    }))
+    // If we have editable_fields, use them
+    if (schema.editable_fields) {
+      return Object.entries(schema.editable_fields).map(([key, field]) => ({
+        key,
+        label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+        value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
+        editable: field.editable,
+        fieldType: field.field_type,
+        description: field.description
+      }))
+    }
+    
+    // If no editable_fields, create all fields from schema_data
+    if (schema.schema_data) {
+      const schemaData = schema.schema_data
+      const allFields = []
+      
+      if (schemaData.name) {
+        allFields.push({
+          key: 'name',
+          label: 'Name',
+          value: schemaData.name,
+          editable: true,
+          fieldType: 'text',
+          description: 'Service/Product name'
+        })
+      }
+      
+      if (schemaData.description) {
+        allFields.push({
+          key: 'description', 
+          label: 'Description',
+          value: schemaData.description,
+          editable: true,
+          fieldType: 'textarea',
+          description: 'Service/Product description'
+        })
+      }
+      
+      if (schemaData.serviceType) {
+        allFields.push({
+          key: 'serviceType',
+          label: 'Service Type', 
+          value: schemaData.serviceType,
+          editable: true,
+          fieldType: 'text',
+          description: 'Type of service offered'
+        })
+      }
+      
+      if (schemaData.areaServed) {
+        const areaValue = Array.isArray(schemaData.areaServed) ? 
+          schemaData.areaServed.join(', ') : 
+          (schemaData.areaServed.name || schemaData.areaServed)
+        allFields.push({
+          key: 'areaServed',
+          label: 'Area Served',
+          value: areaValue,
+          editable: true,
+          fieldType: 'array',
+          description: 'Geographic areas served'
+        })
+      }
+      
+      if (schemaData.offers?.description) {
+        allFields.push({
+          key: 'offersDescription',
+          label: 'Offers Description',
+          value: schemaData.offers.description,
+          editable: true,
+          fieldType: 'textarea',
+          description: 'Description of service offerings'
+        })
+      }
+      
+      if (schemaData.image) {
+        allFields.push({
+          key: 'image',
+          label: 'Image',
+          value: schemaData.image,
+          editable: true,
+          fieldType: 'url',
+          description: 'Service/Product image URL'
+        })
+      }
+      
+      if (schemaData.provider?.name) {
+        allFields.push({
+          key: 'providerName',
+          label: 'Provider Name',
+          value: schemaData.provider.name,
+          editable: true,
+          fieldType: 'text',
+          description: 'Service provider organization name'
+        })
+      }
+      
+      return allFields
+    }
+    
+    return []
   }
 
   return (
