@@ -262,6 +262,69 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
       }
     }
     
+    // Handle LocalBusiness schema type
+    else if (schemaData['@type'] === 'LocalBusiness') {
+      if (schemaData.name) initialFields.name = schemaData.name
+      if (schemaData.image) initialFields.image = schemaData.image
+      if (schemaData.url) initialFields.url = schemaData.url
+      if (schemaData.telephone) initialFields.telephone = schemaData.telephone
+      if (schemaData.email) initialFields.email = schemaData.email
+      
+      // Address details
+      if (schemaData.address?.streetAddress) initialFields.addressStreet = schemaData.address.streetAddress
+      if (schemaData.address?.addressLocality) initialFields.addressCity = schemaData.address.addressLocality
+      if (schemaData.address?.addressRegion) initialFields.addressRegion = schemaData.address.addressRegion
+      if (schemaData.address?.postalCode) initialFields.addressPostalCode = schemaData.address.postalCode
+      if (schemaData.address?.addressCountry) initialFields.addressCountry = schemaData.address.addressCountry
+      
+      // Geographic coordinates
+      if (schemaData.geo?.latitude) initialFields.latitude = schemaData.geo.latitude
+      if (schemaData.geo?.longitude) initialFields.longitude = schemaData.geo.longitude
+      
+      // Opening hours
+      if (schemaData.openingHoursSpecification && Array.isArray(schemaData.openingHoursSpecification)) {
+        schemaData.openingHoursSpecification.forEach((hours, index) => {
+          if (hours.dayOfWeek && Array.isArray(hours.dayOfWeek)) {
+            initialFields[`openingDays_${index}`] = hours.dayOfWeek.join(', ')
+          }
+          if (hours.opens) initialFields[`openTime_${index}`] = hours.opens
+          if (hours.closes) initialFields[`closeTime_${index}`] = hours.closes
+        })
+      }
+      
+      // Area served
+      if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+        schemaData.areaServed.forEach((area, index) => {
+          const areaName = area.name || area
+          initialFields[`areaServed_${index}`] = areaName
+        })
+      }
+      
+      // Local business features
+      if (schemaData.priceRange) initialFields.priceRange = schemaData.priceRange
+      if (schemaData.currenciesAccepted) initialFields.currenciesAccepted = schemaData.currenciesAccepted
+      if (schemaData.paymentAccepted) initialFields.paymentAccepted = schemaData.paymentAccepted
+      
+      // Languages
+      if (schemaData.inLanguage && Array.isArray(schemaData.inLanguage)) {
+        initialFields.inLanguage = schemaData.inLanguage.join(', ')
+      }
+      
+      // Parent organization
+      if (schemaData.parentOrganization?.name) initialFields.parentOrgName = schemaData.parentOrganization.name
+      if (schemaData.parentOrganization?.url) initialFields.parentOrgUrl = schemaData.parentOrganization.url
+      
+      // Local departments
+      if (schemaData.department && Array.isArray(schemaData.department)) {
+        schemaData.department.forEach((dept, index) => {
+          if (dept.name) initialFields[`department_${index}_name`] = dept.name
+          if (dept.contactPoint?.telephone) initialFields[`department_${index}_phone`] = dept.contactPoint.telephone
+          if (dept.contactPoint?.email) initialFields[`department_${index}_email`] = dept.contactPoint.email
+          if (dept.contactPoint?.contactType) initialFields[`department_${index}_type`] = dept.contactPoint.contactType
+        })
+      }
+    }
+    
     setEditedFields(initialFields)
   }, [schema])
 
@@ -873,6 +936,261 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           })
         }
       }
+      // Handle LocalBusiness schema type
+      else if (schemaData['@type'] === 'LocalBusiness') {
+        if (schemaData.name) {
+          allFields.name = {
+            value: schemaData.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Local business location name'
+          }
+        }
+        
+        if (schemaData.image) {
+          allFields.image = {
+            value: schemaData.image,
+            field_type: 'url',
+            editable: true,
+            description: 'Business location image'
+          }
+        }
+        
+        if (schemaData.url) {
+          allFields.url = {
+            value: schemaData.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Location website or page'
+          }
+        }
+        
+        if (schemaData.telephone) {
+          allFields.telephone = {
+            value: schemaData.telephone,
+            field_type: 'tel',
+            editable: true,
+            description: 'Local office phone number'
+          }
+        }
+        
+        if (schemaData.email) {
+          allFields.email = {
+            value: schemaData.email,
+            field_type: 'email',
+            editable: true,
+            description: 'Local office email'
+          }
+        }
+        
+        // Address details
+        if (schemaData.address?.streetAddress) {
+          allFields.addressStreet = {
+            value: schemaData.address.streetAddress,
+            field_type: 'text',
+            editable: true,
+            description: 'Street address'
+          }
+        }
+        
+        if (schemaData.address?.addressLocality) {
+          allFields.addressCity = {
+            value: schemaData.address.addressLocality,
+            field_type: 'text',
+            editable: true,
+            description: 'City or locality'
+          }
+        }
+        
+        if (schemaData.address?.addressRegion) {
+          allFields.addressRegion = {
+            value: schemaData.address.addressRegion,
+            field_type: 'text',
+            editable: true,
+            description: 'Region or state'
+          }
+        }
+        
+        if (schemaData.address?.postalCode) {
+          allFields.addressPostalCode = {
+            value: schemaData.address.postalCode,
+            field_type: 'text',
+            editable: true,
+            description: 'Postal code'
+          }
+        }
+        
+        if (schemaData.address?.addressCountry) {
+          allFields.addressCountry = {
+            value: schemaData.address.addressCountry,
+            field_type: 'text',
+            editable: true,
+            description: 'Country'
+          }
+        }
+        
+        // Geographic coordinates
+        if (schemaData.geo?.latitude) {
+          allFields.latitude = {
+            value: schemaData.geo.latitude,
+            field_type: 'text',
+            editable: true,
+            description: 'Geographic latitude'
+          }
+        }
+        
+        if (schemaData.geo?.longitude) {
+          allFields.longitude = {
+            value: schemaData.geo.longitude,
+            field_type: 'text',
+            editable: true,
+            description: 'Geographic longitude'
+          }
+        }
+        
+        // Opening hours
+        if (schemaData.openingHoursSpecification && Array.isArray(schemaData.openingHoursSpecification)) {
+          schemaData.openingHoursSpecification.forEach((hours, index) => {
+            if (hours.dayOfWeek && Array.isArray(hours.dayOfWeek)) {
+              allFields[`openingDays_${index}`] = {
+                value: hours.dayOfWeek.join(', '),
+                field_type: 'text',
+                editable: true,
+                description: `Operating days #${index + 1}`
+              }
+            }
+            
+            if (hours.opens) {
+              allFields[`openTime_${index}`] = {
+                value: hours.opens,
+                field_type: 'time',
+                editable: true,
+                description: `Opening time #${index + 1}`
+              }
+            }
+            
+            if (hours.closes) {
+              allFields[`closeTime_${index}`] = {
+                value: hours.closes,
+                field_type: 'time',
+                editable: true,
+                description: `Closing time #${index + 1}`
+              }
+            }
+          })
+        }
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            allFields[`areaServed_${index}`] = {
+              value: areaName,
+              field_type: 'text',
+              editable: true,
+              description: `Area served #${index + 1}`
+            }
+          })
+        }
+        
+        // Local business features
+        if (schemaData.priceRange) {
+          allFields.priceRange = {
+            value: schemaData.priceRange,
+            field_type: 'text',
+            editable: true,
+            description: 'Price range indicator'
+          }
+        }
+        
+        if (schemaData.currenciesAccepted) {
+          allFields.currenciesAccepted = {
+            value: schemaData.currenciesAccepted,
+            field_type: 'text',
+            editable: true,
+            description: 'Currencies accepted'
+          }
+        }
+        
+        if (schemaData.paymentAccepted) {
+          allFields.paymentAccepted = {
+            value: schemaData.paymentAccepted,
+            field_type: 'text',
+            editable: true,
+            description: 'Payment methods accepted'
+          }
+        }
+        
+        // Languages
+        if (schemaData.inLanguage && Array.isArray(schemaData.inLanguage)) {
+          allFields.inLanguage = {
+            value: schemaData.inLanguage.join(', '),
+            field_type: 'text',
+            editable: true,
+            description: 'Languages spoken'
+          }
+        }
+        
+        // Parent organization
+        if (schemaData.parentOrganization?.name) {
+          allFields.parentOrgName = {
+            value: schemaData.parentOrganization.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Parent organization name'
+          }
+        }
+        
+        if (schemaData.parentOrganization?.url) {
+          allFields.parentOrgUrl = {
+            value: schemaData.parentOrganization.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Parent organization URL'
+          }
+        }
+        
+        // Local departments
+        if (schemaData.department && Array.isArray(schemaData.department)) {
+          schemaData.department.forEach((dept, index) => {
+            if (dept.name) {
+              allFields[`department_${index}_name`] = {
+                value: dept.name,
+                field_type: 'text',
+                editable: true,
+                description: `Local department #${index + 1} name`
+              }
+            }
+            
+            if (dept.contactPoint?.telephone) {
+              allFields[`department_${index}_phone`] = {
+                value: dept.contactPoint.telephone,
+                field_type: 'tel',
+                editable: true,
+                description: `Department #${index + 1} phone`
+              }
+            }
+            
+            if (dept.contactPoint?.email) {
+              allFields[`department_${index}_email`] = {
+                value: dept.contactPoint.email,
+                field_type: 'email',
+                editable: true,
+                description: `Department #${index + 1} email`
+              }
+            }
+            
+            if (dept.contactPoint?.contactType) {
+              allFields[`department_${index}_type`] = {
+                value: dept.contactPoint.contactType,
+                field_type: 'text',
+                editable: true,
+                description: `Department #${index + 1} contact type`
+              }
+            }
+          })
+        }
+      }
       // Handle other schema types (Service, Product, etc.) - existing code
       else {
         // Create editable fields from common schema properties
@@ -1041,6 +1359,18 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
             value={value || ''}
             onChange={(e) => handleFieldChange(fieldName, e.target.value)}
             className="form-input"
+          />
+        )
+      
+      case 'time':
+        return (
+          <input
+            id={fieldId}
+            type="time"
+            value={value || ''}
+            onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+            className="form-input"
+            placeholder="HH:MM"
           />
         )
       

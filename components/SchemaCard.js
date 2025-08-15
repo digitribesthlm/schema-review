@@ -268,6 +268,105 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return previewFields.slice(0, 6)
       }
       
+      // Handle LocalBusiness schema type
+      if (schemaData['@type'] === 'LocalBusiness') {
+        if (schemaData.name) {
+          previewFields.push({
+            key: 'name',
+            label: 'Business Name',
+            value: schemaData.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.address?.addressLocality && schemaData.address?.addressCountry) {
+          previewFields.push({
+            key: 'location',
+            label: 'Location',
+            value: `${schemaData.address.addressLocality}, ${schemaData.address.addressCountry}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.geo?.latitude && schemaData.geo?.longitude) {
+          previewFields.push({
+            key: 'coordinates',
+            label: 'Coordinates',
+            value: `${schemaData.geo.latitude}, ${schemaData.geo.longitude}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.openingHoursSpecification && Array.isArray(schemaData.openingHoursSpecification)) {
+          const hours = schemaData.openingHoursSpecification[0]
+          if (hours.opens && hours.closes) {
+            previewFields.push({
+              key: 'openingHours',
+              label: 'Opening Hours',
+              value: `${hours.opens} - ${hours.closes}`,
+              editable: false
+            })
+          }
+        }
+        
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          const countries = schemaData.areaServed.map(area => area.name || area).join(', ')
+          previewFields.push({
+            key: 'areaServed',
+            label: 'Areas Served',
+            value: `${schemaData.areaServed.length} countries: ${countries.length > 40 ? countries.substring(0, 40) + '...' : countries}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.priceRange) {
+          previewFields.push({
+            key: 'priceRange',
+            label: 'Price Range',
+            value: schemaData.priceRange,
+            editable: true
+          })
+        }
+        
+        if (schemaData.currenciesAccepted) {
+          previewFields.push({
+            key: 'currencies',
+            label: 'Currencies',
+            value: schemaData.currenciesAccepted,
+            editable: true
+          })
+        }
+        
+        if (schemaData.inLanguage && Array.isArray(schemaData.inLanguage)) {
+          previewFields.push({
+            key: 'languages',
+            label: 'Languages',
+            value: `${schemaData.inLanguage.length} languages: ${schemaData.inLanguage.join(', ')}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.parentOrganization?.name) {
+          previewFields.push({
+            key: 'parentOrg',
+            label: 'Parent Company',
+            value: schemaData.parentOrganization.name,
+            editable: false
+          })
+        }
+        
+        if (schemaData.department && Array.isArray(schemaData.department)) {
+          previewFields.push({
+            key: 'departments',
+            label: 'Local Departments',
+            value: `${schemaData.department.length} departments`,
+            editable: false
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
       // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
@@ -1017,6 +1116,316 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
             editable: true,
             fieldType: 'text',
             description: 'VAT identification number'
+          })
+        }
+        
+        return allFields
+      }
+      
+      // Handle LocalBusiness schema type
+      if (schemaData['@type'] === 'LocalBusiness') {
+        if (schemaData.name) {
+          allFields.push({
+            key: 'name',
+            label: 'Business Name',
+            value: schemaData.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Local business location name'
+          })
+        }
+        
+        if (schemaData.image) {
+          allFields.push({
+            key: 'image',
+            label: 'Business Image',
+            value: schemaData.image,
+            editable: true,
+            fieldType: 'url',
+            description: 'Image of the business location'
+          })
+        }
+        
+        if (schemaData.url) {
+          allFields.push({
+            key: 'url',
+            label: 'Website URL',
+            value: schemaData.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Location-specific website or page'
+          })
+        }
+        
+        if (schemaData.telephone) {
+          allFields.push({
+            key: 'telephone',
+            label: 'Phone Number',
+            value: schemaData.telephone,
+            editable: true,
+            fieldType: 'tel',
+            description: 'Local office phone number'
+          })
+        }
+        
+        if (schemaData.email) {
+          allFields.push({
+            key: 'email',
+            label: 'Email Address',
+            value: schemaData.email,
+            editable: true,
+            fieldType: 'email',
+            description: 'Local office email address'
+          })
+        }
+        
+        // Address details
+        if (schemaData.address?.streetAddress) {
+          allFields.push({
+            key: 'addressStreet',
+            label: 'Street Address',
+            value: schemaData.address.streetAddress,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business street address'
+          })
+        }
+        
+        if (schemaData.address?.addressLocality) {
+          allFields.push({
+            key: 'addressCity',
+            label: 'City',
+            value: schemaData.address.addressLocality,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business city or locality'
+          })
+        }
+        
+        if (schemaData.address?.addressRegion) {
+          allFields.push({
+            key: 'addressRegion',
+            label: 'Region/State',
+            value: schemaData.address.addressRegion,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business region, state, or province'
+          })
+        }
+        
+        if (schemaData.address?.postalCode) {
+          allFields.push({
+            key: 'addressPostalCode',
+            label: 'Postal Code',
+            value: schemaData.address.postalCode,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business postal or ZIP code'
+          })
+        }
+        
+        if (schemaData.address?.addressCountry) {
+          allFields.push({
+            key: 'addressCountry',
+            label: 'Country',
+            value: schemaData.address.addressCountry,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business country code or name'
+          })
+        }
+        
+        // Geographic coordinates
+        if (schemaData.geo?.latitude) {
+          allFields.push({
+            key: 'latitude',
+            label: 'Latitude',
+            value: schemaData.geo.latitude,
+            editable: true,
+            fieldType: 'text',
+            description: 'Geographic latitude coordinate'
+          })
+        }
+        
+        if (schemaData.geo?.longitude) {
+          allFields.push({
+            key: 'longitude',
+            label: 'Longitude',
+            value: schemaData.geo.longitude,
+            editable: true,
+            fieldType: 'text',
+            description: 'Geographic longitude coordinate'
+          })
+        }
+        
+        // Opening hours
+        if (schemaData.openingHoursSpecification && Array.isArray(schemaData.openingHoursSpecification)) {
+          schemaData.openingHoursSpecification.forEach((hours, index) => {
+            if (hours.dayOfWeek && Array.isArray(hours.dayOfWeek)) {
+              allFields.push({
+                key: `openingDays_${index}`,
+                label: `Operating Days ${index + 1}`,
+                value: hours.dayOfWeek.join(', '),
+                editable: true,
+                fieldType: 'text',
+                description: `Days of operation for schedule #${index + 1}`
+              })
+            }
+            
+            if (hours.opens) {
+              allFields.push({
+                key: `openTime_${index}`,
+                label: `Opening Time ${index + 1}`,
+                value: hours.opens,
+                editable: true,
+                fieldType: 'time',
+                description: `Opening time for schedule #${index + 1}`
+              })
+            }
+            
+            if (hours.closes) {
+              allFields.push({
+                key: `closeTime_${index}`,
+                label: `Closing Time ${index + 1}`,
+                value: hours.closes,
+                editable: true,
+                fieldType: 'time',
+                description: `Closing time for schedule #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            allFields.push({
+              key: `areaServed_${index}`,
+              label: `Area Served ${index + 1}`,
+              value: areaName,
+              editable: true,
+              fieldType: 'text',
+              description: `Geographic area #${index + 1} served by this location`
+            })
+          })
+        }
+        
+        // Local business features
+        if (schemaData.priceRange) {
+          allFields.push({
+            key: 'priceRange',
+            label: 'Price Range',
+            value: schemaData.priceRange,
+            editable: true,
+            fieldType: 'text',
+            description: 'Business price range indicator (e.g., $, $$, $$$)'
+          })
+        }
+        
+        if (schemaData.currenciesAccepted) {
+          allFields.push({
+            key: 'currenciesAccepted',
+            label: 'Currencies Accepted',
+            value: schemaData.currenciesAccepted,
+            editable: true,
+            fieldType: 'text',
+            description: 'Currencies accepted at this location'
+          })
+        }
+        
+        if (schemaData.paymentAccepted) {
+          allFields.push({
+            key: 'paymentAccepted',
+            label: 'Payment Methods',
+            value: schemaData.paymentAccepted,
+            editable: true,
+            fieldType: 'text',
+            description: 'Payment methods accepted'
+          })
+        }
+        
+        // Languages
+        if (schemaData.inLanguage && Array.isArray(schemaData.inLanguage)) {
+          allFields.push({
+            key: 'inLanguage',
+            label: 'Languages Spoken',
+            value: schemaData.inLanguage.join(', '),
+            editable: true,
+            fieldType: 'text',
+            description: 'Languages spoken at this location'
+          })
+        }
+        
+        // Parent organization
+        if (schemaData.parentOrganization?.name) {
+          allFields.push({
+            key: 'parentOrgName',
+            label: 'Parent Organization',
+            value: schemaData.parentOrganization.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Parent company or organization'
+          })
+        }
+        
+        if (schemaData.parentOrganization?.url) {
+          allFields.push({
+            key: 'parentOrgUrl',
+            label: 'Parent Organization URL',
+            value: schemaData.parentOrganization.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Parent organization website'
+          })
+        }
+        
+        // Local departments
+        if (schemaData.department && Array.isArray(schemaData.department)) {
+          schemaData.department.forEach((dept, index) => {
+            if (dept.name) {
+              allFields.push({
+                key: `department_${index}_name`,
+                label: `Local Department ${index + 1}`,
+                value: dept.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Local department #${index + 1} name`
+              })
+            }
+            
+            if (dept.contactPoint?.telephone) {
+              allFields.push({
+                key: `department_${index}_phone`,
+                label: `Department ${index + 1} Phone`,
+                value: dept.contactPoint.telephone,
+                editable: true,
+                fieldType: 'tel',
+                description: `Local department #${index + 1} phone`
+              })
+            }
+            
+            if (dept.contactPoint?.email) {
+              allFields.push({
+                key: `department_${index}_email`,
+                label: `Department ${index + 1} Email`,
+                value: dept.contactPoint.email,
+                editable: true,
+                fieldType: 'email',
+                description: `Local department #${index + 1} email`
+              })
+            }
+            
+            if (dept.contactPoint?.contactType) {
+              allFields.push({
+                key: `department_${index}_type`,
+                label: `Department ${index + 1} Type`,
+                value: dept.contactPoint.contactType,
+                editable: true,
+                fieldType: 'text',
+                description: `Local department #${index + 1} contact type`
+              })
+            }
           })
         }
         
