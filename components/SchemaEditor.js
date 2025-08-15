@@ -251,6 +251,71 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           })
         }
       }
+      
+      // Handle Service schema type
+      else if (schemaData['@type'] === 'Service') {
+        if (schemaData.name) initialFields.name = schemaData.name
+        if (schemaData.description) initialFields.description = schemaData.description
+        if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
+        if (schemaData.category) initialFields.category = schemaData.category
+        
+        // Provider organization
+        if (schemaData.provider?.name) initialFields.providerName = schemaData.provider.name
+        if (schemaData.provider?.url) initialFields.providerUrl = schemaData.provider.url
+        
+        // Audience
+        if (schemaData.audience?.audienceType) initialFields.audienceType = schemaData.audience.audienceType
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            initialFields[`areaServed_${index}`] = areaName
+          })
+        }
+        
+        // Service channels
+        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
+          schemaData.availableChannel.forEach((channel, index) => {
+            if (channel.serviceType) initialFields[`channel_${index}_type`] = channel.serviceType
+            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
+              initialFields[`channel_${index}_languages`] = channel.availableLanguage.join(', ')
+            }
+          })
+        }
+        
+        // Service output
+        if (schemaData.serviceOutput?.name) initialFields.serviceOutputName = schemaData.serviceOutput.name
+        if (schemaData.serviceOutput?.description) initialFields.serviceOutputDescription = schemaData.serviceOutput.description
+        
+        // Offers and pricing
+        if (schemaData.offers?.priceRange) initialFields.offerPriceRange = schemaData.offers.priceRange
+        if (schemaData.offers?.priceCurrency) initialFields.offerCurrency = schemaData.offers.priceCurrency
+        if (schemaData.offers?.availability) initialFields.offerAvailability = schemaData.offers.availability
+        if (schemaData.offers?.validFrom) initialFields.offerValidFrom = schemaData.offers.validFrom
+        if (schemaData.offers?.validThrough) initialFields.offerValidThrough = schemaData.offers.validThrough
+        
+        // Offer catalog
+        if (schemaData.hasOfferCatalog?.name) initialFields.offerCatalogName = schemaData.hasOfferCatalog.name
+        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
+          schemaData.hasOfferCatalog.itemListElement.forEach((item, index) => {
+            if (item.itemOffered?.name) initialFields[`catalog_${index}_name`] = item.itemOffered.name
+            if (item.itemOffered?.description) initialFields[`catalog_${index}_description`] = item.itemOffered.description
+          })
+        }
+        
+        // Terms of service
+        if (schemaData.termsOfService) initialFields.termsOfService = schemaData.termsOfService
+        
+        // Hours available
+        if (schemaData.hoursAvailable) {
+          if (schemaData.hoursAvailable.dayOfWeek && Array.isArray(schemaData.hoursAvailable.dayOfWeek)) {
+            initialFields.hoursAvailableDays = schemaData.hoursAvailable.dayOfWeek.join(', ')
+          }
+          if (schemaData.hoursAvailable.opens) initialFields.hoursOpens = schemaData.hoursAvailable.opens
+          if (schemaData.hoursAvailable.closes) initialFields.hoursCloses = schemaData.hoursAvailable.closes
+        }
+      }
       // Handle other schema types
       else {
         if (schemaData.name) initialFields.name = schemaData.name
@@ -934,6 +999,246 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
               description: `Social media profile #${index + 1}`
             }
           })
+        }
+      }
+      // Handle Service schema type
+      else if (schemaData['@type'] === 'Service') {
+        if (schemaData.name) {
+          allFields.name = {
+            value: schemaData.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Service name'
+          }
+        }
+        
+        if (schemaData.description) {
+          allFields.description = {
+            value: schemaData.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Service description'
+          }
+        }
+        
+        if (schemaData.serviceType) {
+          allFields.serviceType = {
+            value: schemaData.serviceType,
+            field_type: 'text',
+            editable: true,
+            description: 'Type of service offered'
+          }
+        }
+        
+        if (schemaData.category) {
+          allFields.category = {
+            value: schemaData.category,
+            field_type: 'text',
+            editable: true,
+            description: 'Service category'
+          }
+        }
+        
+        // Provider organization
+        if (schemaData.provider?.name) {
+          allFields.providerName = {
+            value: schemaData.provider.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Service provider organization'
+          }
+        }
+        
+        if (schemaData.provider?.url) {
+          allFields.providerUrl = {
+            value: schemaData.provider.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Provider website URL'
+          }
+        }
+        
+        // Audience
+        if (schemaData.audience?.audienceType) {
+          allFields.audienceType = {
+            value: schemaData.audience.audienceType,
+            field_type: 'text',
+            editable: true,
+            description: 'Target audience type'
+          }
+        }
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            allFields[`areaServed_${index}`] = {
+              value: areaName,
+              field_type: 'text',
+              editable: true,
+              description: `Geographic area served #${index + 1}`
+            }
+          })
+        }
+        
+        // Service channels
+        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
+          schemaData.availableChannel.forEach((channel, index) => {
+            if (channel.serviceType) {
+              allFields[`channel_${index}_type`] = {
+                value: channel.serviceType,
+                field_type: 'text',
+                editable: true,
+                description: `Service channel #${index + 1} type`
+              }
+            }
+            
+            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
+              allFields[`channel_${index}_languages`] = {
+                value: channel.availableLanguage.join(', '),
+                field_type: 'text',
+                editable: true,
+                description: `Languages for channel #${index + 1}`
+              }
+            }
+          })
+        }
+        
+        // Service output
+        if (schemaData.serviceOutput?.name) {
+          allFields.serviceOutputName = {
+            value: schemaData.serviceOutput.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Service output/deliverable name'
+          }
+        }
+        
+        if (schemaData.serviceOutput?.description) {
+          allFields.serviceOutputDescription = {
+            value: schemaData.serviceOutput.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Service output description'
+          }
+        }
+        
+        // Offers and pricing
+        if (schemaData.offers?.priceRange) {
+          allFields.offerPriceRange = {
+            value: schemaData.offers.priceRange,
+            field_type: 'text',
+            editable: true,
+            description: 'Service price range'
+          }
+        }
+        
+        if (schemaData.offers?.priceCurrency) {
+          allFields.offerCurrency = {
+            value: schemaData.offers.priceCurrency,
+            field_type: 'text',
+            editable: true,
+            description: 'Currency for pricing'
+          }
+        }
+        
+        if (schemaData.offers?.availability) {
+          allFields.offerAvailability = {
+            value: schemaData.offers.availability,
+            field_type: 'text',
+            editable: true,
+            description: 'Service availability'
+          }
+        }
+        
+        if (schemaData.offers?.validFrom) {
+          allFields.offerValidFrom = {
+            value: schemaData.offers.validFrom,
+            field_type: 'date',
+            editable: true,
+            description: 'Offer valid from date'
+          }
+        }
+        
+        if (schemaData.offers?.validThrough) {
+          allFields.offerValidThrough = {
+            value: schemaData.offers.validThrough,
+            field_type: 'date',
+            editable: true,
+            description: 'Offer valid until date'
+          }
+        }
+        
+        // Offer catalog
+        if (schemaData.hasOfferCatalog?.name) {
+          allFields.offerCatalogName = {
+            value: schemaData.hasOfferCatalog.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Service catalog name'
+          }
+        }
+        
+        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
+          schemaData.hasOfferCatalog.itemListElement.forEach((item, index) => {
+            if (item.itemOffered?.name) {
+              allFields[`catalog_${index}_name`] = {
+                value: item.itemOffered.name,
+                field_type: 'text',
+                editable: true,
+                description: `Catalog service #${index + 1} name`
+              }
+            }
+            
+            if (item.itemOffered?.description) {
+              allFields[`catalog_${index}_description`] = {
+                value: item.itemOffered.description,
+                field_type: 'textarea',
+                editable: true,
+                description: `Catalog service #${index + 1} description`
+              }
+            }
+          })
+        }
+        
+        // Terms of service
+        if (schemaData.termsOfService) {
+          allFields.termsOfService = {
+            value: schemaData.termsOfService,
+            field_type: 'url',
+            editable: true,
+            description: 'Terms of service URL'
+          }
+        }
+        
+        // Hours available
+        if (schemaData.hoursAvailable) {
+          if (schemaData.hoursAvailable.dayOfWeek && Array.isArray(schemaData.hoursAvailable.dayOfWeek)) {
+            allFields.hoursAvailableDays = {
+              value: schemaData.hoursAvailable.dayOfWeek.join(', '),
+              field_type: 'text',
+              editable: true,
+              description: 'Available days for service'
+            }
+          }
+          
+          if (schemaData.hoursAvailable.opens) {
+            allFields.hoursOpens = {
+              value: schemaData.hoursAvailable.opens,
+              field_type: 'time',
+              editable: true,
+              description: 'Service opening time'
+            }
+          }
+          
+          if (schemaData.hoursAvailable.closes) {
+            allFields.hoursCloses = {
+              value: schemaData.hoursAvailable.closes,
+              field_type: 'time',
+              editable: true,
+              description: 'Service closing time'
+            }
+          }
         }
       }
       // Handle LocalBusiness schema type

@@ -367,6 +367,103 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return previewFields.slice(0, 6)
       }
       
+      // Handle Service schema type
+      if (schemaData['@type'] === 'Service') {
+        if (schemaData.name) {
+          previewFields.push({
+            key: 'name',
+            label: 'Service Name',
+            value: schemaData.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.serviceType) {
+          previewFields.push({
+            key: 'serviceType',
+            label: 'Service Type',
+            value: schemaData.serviceType,
+            editable: true
+          })
+        }
+        
+        if (schemaData.category) {
+          previewFields.push({
+            key: 'category',
+            label: 'Category',
+            value: schemaData.category,
+            editable: true
+          })
+        }
+        
+        if (schemaData.audience?.audienceType) {
+          previewFields.push({
+            key: 'audience',
+            label: 'Target Audience',
+            value: schemaData.audience.audienceType,
+            editable: false
+          })
+        }
+        
+        if (schemaData.offers?.priceRange) {
+          previewFields.push({
+            key: 'priceRange',
+            label: 'Price Range',
+            value: `${schemaData.offers.priceRange} ${schemaData.offers.priceCurrency || ''}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
+          const channels = schemaData.availableChannel.map(channel => channel.serviceType || 'Service').join(', ')
+          previewFields.push({
+            key: 'channels',
+            label: 'Service Channels',
+            value: `${schemaData.availableChannel.length} channels: ${channels}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          const countries = schemaData.areaServed.map(area => area.name || area).join(', ')
+          previewFields.push({
+            key: 'areaServed',
+            label: 'Areas Served',
+            value: `${schemaData.areaServed.length} countries: ${countries.length > 40 ? countries.substring(0, 40) + '...' : countries}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
+          previewFields.push({
+            key: 'offerCatalog',
+            label: 'Service Catalog',
+            value: `${schemaData.hasOfferCatalog.itemListElement.length} services available`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.provider?.name) {
+          previewFields.push({
+            key: 'provider',
+            label: 'Service Provider',
+            value: schemaData.provider.name,
+            editable: false
+          })
+        }
+        
+        if (schemaData.serviceOutput?.name) {
+          previewFields.push({
+            key: 'serviceOutput',
+            label: 'Service Output',
+            value: schemaData.serviceOutput.name,
+            editable: false
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
       // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
@@ -1432,6 +1529,297 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return allFields
       }
       
+      // Handle Service schema type
+      if (schemaData['@type'] === 'Service') {
+        if (schemaData.name) {
+          allFields.push({
+            key: 'name',
+            label: 'Service Name',
+            value: schemaData.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Name of the service offered'
+          })
+        }
+        
+        if (schemaData.description) {
+          allFields.push({
+            key: 'description',
+            label: 'Service Description',
+            value: schemaData.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Detailed description of the service'
+          })
+        }
+        
+        if (schemaData.serviceType) {
+          allFields.push({
+            key: 'serviceType',
+            label: 'Service Type',
+            value: schemaData.serviceType,
+            editable: true,
+            fieldType: 'text',
+            description: 'Category or type of service'
+          })
+        }
+        
+        if (schemaData.category) {
+          allFields.push({
+            key: 'category',
+            label: 'Service Category',
+            value: schemaData.category,
+            editable: true,
+            fieldType: 'text',
+            description: 'General category classification'
+          })
+        }
+        
+        // Provider organization
+        if (schemaData.provider?.name) {
+          allFields.push({
+            key: 'providerName',
+            label: 'Service Provider',
+            value: schemaData.provider.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Organization providing the service'
+          })
+        }
+        
+        if (schemaData.provider?.url) {
+          allFields.push({
+            key: 'providerUrl',
+            label: 'Provider Website',
+            value: schemaData.provider.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Service provider website URL'
+          })
+        }
+        
+        // Audience information
+        if (schemaData.audience?.audienceType) {
+          allFields.push({
+            key: 'audienceType',
+            label: 'Target Audience',
+            value: schemaData.audience.audienceType,
+            editable: true,
+            fieldType: 'text',
+            description: 'Primary audience for this service'
+          })
+        }
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            allFields.push({
+              key: `areaServed_${index}`,
+              label: `Area Served ${index + 1}`,
+              value: areaName,
+              editable: true,
+              fieldType: 'text',
+              description: `Geographic area #${index + 1} where service is available`
+            })
+          })
+        }
+        
+        // Service channels
+        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
+          schemaData.availableChannel.forEach((channel, index) => {
+            if (channel.serviceType) {
+              allFields.push({
+                key: `channel_${index}_type`,
+                label: `Service Channel ${index + 1}`,
+                value: channel.serviceType,
+                editable: true,
+                fieldType: 'text',
+                description: `Service delivery channel #${index + 1}`
+              })
+            }
+            
+            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
+              allFields.push({
+                key: `channel_${index}_languages`,
+                label: `Channel ${index + 1} Languages`,
+                value: channel.availableLanguage.join(', '),
+                editable: true,
+                fieldType: 'text',
+                description: `Languages available for channel #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Service output/deliverables
+        if (schemaData.serviceOutput?.name) {
+          allFields.push({
+            key: 'serviceOutputName',
+            label: 'Service Output',
+            value: schemaData.serviceOutput.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Main deliverable or output of the service'
+          })
+        }
+        
+        if (schemaData.serviceOutput?.description) {
+          allFields.push({
+            key: 'serviceOutputDescription',
+            label: 'Output Description',
+            value: schemaData.serviceOutput.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Description of service deliverables'
+          })
+        }
+        
+        // Offers and pricing
+        if (schemaData.offers?.priceRange) {
+          allFields.push({
+            key: 'offerPriceRange',
+            label: 'Price Range',
+            value: schemaData.offers.priceRange,
+            editable: true,
+            fieldType: 'text',
+            description: 'Service pricing range'
+          })
+        }
+        
+        if (schemaData.offers?.priceCurrency) {
+          allFields.push({
+            key: 'offerCurrency',
+            label: 'Price Currency',
+            value: schemaData.offers.priceCurrency,
+            editable: true,
+            fieldType: 'text',
+            description: 'Currency for pricing'
+          })
+        }
+        
+        if (schemaData.offers?.availability) {
+          allFields.push({
+            key: 'offerAvailability',
+            label: 'Availability',
+            value: schemaData.offers.availability,
+            editable: true,
+            fieldType: 'text',
+            description: 'Service availability status'
+          })
+        }
+        
+        if (schemaData.offers?.validFrom) {
+          allFields.push({
+            key: 'offerValidFrom',
+            label: 'Valid From',
+            value: schemaData.offers.validFrom,
+            editable: true,
+            fieldType: 'date',
+            description: 'Offer valid from date'
+          })
+        }
+        
+        if (schemaData.offers?.validThrough) {
+          allFields.push({
+            key: 'offerValidThrough',
+            label: 'Valid Until',
+            value: schemaData.offers.validThrough,
+            editable: true,
+            fieldType: 'date',
+            description: 'Offer valid until date'
+          })
+        }
+        
+        // Offer catalog
+        if (schemaData.hasOfferCatalog?.name) {
+          allFields.push({
+            key: 'offerCatalogName',
+            label: 'Service Catalog Name',
+            value: schemaData.hasOfferCatalog.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Name of the service catalog'
+          })
+        }
+        
+        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
+          schemaData.hasOfferCatalog.itemListElement.forEach((item, index) => {
+            if (item.itemOffered?.name) {
+              allFields.push({
+                key: `catalog_${index}_name`,
+                label: `Catalog Service ${index + 1}`,
+                value: item.itemOffered.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Service #${index + 1} in catalog`
+              })
+            }
+            
+            if (item.itemOffered?.description) {
+              allFields.push({
+                key: `catalog_${index}_description`,
+                label: `Service ${index + 1} Description`,
+                value: item.itemOffered.description,
+                editable: true,
+                fieldType: 'textarea',
+                description: `Description for catalog service #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Terms of service
+        if (schemaData.termsOfService) {
+          allFields.push({
+            key: 'termsOfService',
+            label: 'Terms of Service URL',
+            value: schemaData.termsOfService,
+            editable: true,
+            fieldType: 'url',
+            description: 'Link to terms of service'
+          })
+        }
+        
+        // Hours available
+        if (schemaData.hoursAvailable) {
+          if (schemaData.hoursAvailable.dayOfWeek && Array.isArray(schemaData.hoursAvailable.dayOfWeek)) {
+            allFields.push({
+              key: 'hoursAvailableDays',
+              label: 'Available Days',
+              value: schemaData.hoursAvailable.dayOfWeek.join(', '),
+              editable: true,
+              fieldType: 'text',
+              description: 'Days when service is available'
+            })
+          }
+          
+          if (schemaData.hoursAvailable.opens) {
+            allFields.push({
+              key: 'hoursOpens',
+              label: 'Service Opens',
+              value: schemaData.hoursAvailable.opens,
+              editable: true,
+              fieldType: 'time',
+              description: 'Time when service becomes available'
+            })
+          }
+          
+          if (schemaData.hoursAvailable.closes) {
+            allFields.push({
+              key: 'hoursCloses',
+              label: 'Service Closes',
+              value: schemaData.hoursAvailable.closes,
+              editable: true,
+              fieldType: 'time',
+              description: 'Time when service stops being available'
+            })
+          }
+        }
+        
+        return allFields
+      }
+      
       // Handle other schema types (Service, Product, etc.) - existing code
       if (schemaData.name) {
         allFields.push({
@@ -1668,4 +2056,3 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
     </div>
   )
 }
-
