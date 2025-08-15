@@ -9,6 +9,53 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
   const generateAdditionalFields = (schemaData) => {
     const additionalFields = {}
     
+    // Handle FAQPage specific fields
+    if (schemaData['@type'] === 'FAQPage') {
+      // Handle service and product arrays that might be nested in FAQPage
+      if (schemaData.service && Array.isArray(schemaData.service)) {
+        schemaData.service.forEach((service, index) => {
+          if (service.name && !schema.editable_fields?.[`serviceName_${index}`]) {
+            additionalFields[`serviceName_${index}`] = {
+              value: service.name,
+              field_type: 'text',
+              editable: true,
+              description: `Service ${index + 1} name`
+            }
+          }
+          if (service.description && !schema.editable_fields?.[`serviceDescription_${index}`]) {
+            additionalFields[`serviceDescription_${index}`] = {
+              value: service.description,
+              field_type: 'textarea',
+              editable: true,
+              description: `Service ${index + 1} description`
+            }
+          }
+        })
+      }
+      
+      if (schemaData.product && Array.isArray(schemaData.product)) {
+        schemaData.product.forEach((product, index) => {
+          if (product.name && !schema.editable_fields?.[`productName_${index}`]) {
+            additionalFields[`productName_${index}`] = {
+              value: product.name,
+              field_type: 'text',
+              editable: true,
+              description: `Product ${index + 1} name`
+            }
+          }
+          if (product.description && !schema.editable_fields?.[`productDescription_${index}`]) {
+            additionalFields[`productDescription_${index}`] = {
+              value: product.description,
+              field_type: 'textarea',
+              editable: true,
+              description: `Product ${index + 1} description`
+            }
+          }
+        })
+      }
+    }
+    
+    // Handle other schema types - existing logic
     // Extract nested fields that should be editable
     if (schemaData.offers) {
       if (schemaData.offers.description && !schema.editable_fields?.offersDescription) {
@@ -55,12 +102,30 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
       // Create basic editable fields from schema_data if editable_fields don't exist
       const schemaData = schema.schema_data
       
-      if (schemaData.name) initialFields.name = schemaData.name
-      if (schemaData.description) initialFields.description = schemaData.description
-      if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
-      if (schemaData.areaServed) initialFields.areaServed = schemaData.areaServed
-      if (schemaData.image) initialFields.image = schemaData.image
-      if (schemaData.offers?.description) initialFields.offersDescription = schemaData.offers.description
+      // Handle FAQPage schema type
+      if (schemaData['@type'] === 'FAQPage') {
+        if (schemaData.url) initialFields.url = schemaData.url
+        
+        if (schemaData.mainEntity && Array.isArray(schemaData.mainEntity)) {
+          schemaData.mainEntity.forEach((qa, index) => {
+            if (qa.name) initialFields[`question_${index}`] = qa.name
+            if (qa.acceptedAnswer?.text) initialFields[`answer_${index}`] = qa.acceptedAnswer.text
+          })
+        }
+        
+        if (schemaData.publisher?.name) initialFields.publisherName = schemaData.publisher.name
+        if (schemaData.publisher?.description) initialFields.publisherDescription = schemaData.publisher.description
+        if (schemaData.publisher?.url) initialFields.publisherUrl = schemaData.publisher.url
+      }
+      // Handle other schema types
+      else {
+        if (schemaData.name) initialFields.name = schemaData.name
+        if (schemaData.description) initialFields.description = schemaData.description
+        if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
+        if (schemaData.areaServed) initialFields.areaServed = schemaData.areaServed
+        if (schemaData.image) initialFields.image = schemaData.image
+        if (schemaData.offers?.description) initialFields.offersDescription = schemaData.offers.description
+      }
     }
     
     setEditedFields(initialFields)
@@ -94,58 +159,122 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
     if (!schema.editable_fields && schema.schema_data) {
       const schemaData = schema.schema_data
       
-      // Create editable fields from common schema properties
-      if (schemaData.name) {
-        allFields.name = {
-          value: schemaData.name,
-          field_type: 'text',
-          editable: true,
-          description: 'Service/Product name'
+      // Handle FAQPage schema type
+      if (schemaData['@type'] === 'FAQPage') {
+        if (schemaData.url) {
+          allFields.url = {
+            value: schemaData.url,
+            field_type: 'url',
+            editable: true,
+            description: 'FAQ page URL'
+          }
+        }
+        
+        if (schemaData.mainEntity && Array.isArray(schemaData.mainEntity)) {
+          // Create editable fields for each question-answer pair
+          schemaData.mainEntity.forEach((qa, index) => {
+            if (qa.name) {
+              allFields[`question_${index}`] = {
+                value: qa.name,
+                field_type: 'text',
+                editable: true,
+                description: `FAQ question #${index + 1}`
+              }
+            }
+            
+            if (qa.acceptedAnswer?.text) {
+              allFields[`answer_${index}`] = {
+                value: qa.acceptedAnswer.text,
+                field_type: 'textarea',
+                editable: true,
+                description: `FAQ answer for question #${index + 1}`
+              }
+            }
+          })
+        }
+        
+        if (schemaData.publisher?.name) {
+          allFields.publisherName = {
+            value: schemaData.publisher.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Organization publishing the FAQ'
+          }
+        }
+        
+        if (schemaData.publisher?.description) {
+          allFields.publisherDescription = {
+            value: schemaData.publisher.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Description of the publishing organization'
+          }
+        }
+        
+        if (schemaData.publisher?.url) {
+          allFields.publisherUrl = {
+            value: schemaData.publisher.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Publisher website URL'
+          }
         }
       }
-      
-      if (schemaData.description) {
-        allFields.description = {
-          value: schemaData.description,
-          field_type: 'textarea',
-          editable: true,
-          description: 'Service/Product description'
+      // Handle other schema types (Service, Product, etc.) - existing code
+      else {
+        // Create editable fields from common schema properties
+        if (schemaData.name) {
+          allFields.name = {
+            value: schemaData.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Service/Product name'
+          }
         }
-      }
-      
-      if (schemaData.serviceType) {
-        allFields.serviceType = {
-          value: schemaData.serviceType,
-          field_type: 'text',
-          editable: true,
-          description: 'Type of service'
+        
+        if (schemaData.description) {
+          allFields.description = {
+            value: schemaData.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Service/Product description'
+          }
         }
-      }
-      
-      if (schemaData.areaServed) {
-        allFields.areaServed = {
-          value: Array.isArray(schemaData.areaServed) ? schemaData.areaServed : [schemaData.areaServed.name || schemaData.areaServed],
-          field_type: 'array',
-          editable: true,
-          description: 'Geographic areas served'
+        
+        if (schemaData.serviceType) {
+          allFields.serviceType = {
+            value: schemaData.serviceType,
+            field_type: 'text',
+            editable: true,
+            description: 'Type of service'
+          }
         }
-      }
-      
-      if (schemaData.image) {
-        allFields.image = {
-          value: schemaData.image,
-          field_type: 'url',
-          editable: true,
-          description: 'Service/Product image URL'
+        
+        if (schemaData.areaServed) {
+          allFields.areaServed = {
+            value: Array.isArray(schemaData.areaServed) ? schemaData.areaServed : [schemaData.areaServed.name || schemaData.areaServed],
+            field_type: 'array',
+            editable: true,
+            description: 'Geographic areas served'
+          }
         }
-      }
-      
-      if (schemaData.offers?.description) {
-        allFields.offersDescription = {
-          value: schemaData.offers.description,
-          field_type: 'textarea',
-          editable: true,
-          description: 'Service offering description'
+        
+        if (schemaData.image) {
+          allFields.image = {
+            value: schemaData.image,
+            field_type: 'url',
+            editable: true,
+            description: 'Service/Product image URL'
+          }
+        }
+        
+        if (schemaData.offers?.description) {
+          allFields.offersDescription = {
+            value: schemaData.offers.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Service offering description'
+          }
         }
       }
     }

@@ -42,6 +42,51 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
       const schemaData = schema.schema_data
       const previewFields = []
       
+      // Handle FAQPage schema type
+      if (schemaData['@type'] === 'FAQPage') {
+        if (schemaData.url) {
+          previewFields.push({
+            key: 'url',
+            label: 'FAQ Page URL',
+            value: schemaData.url,
+            editable: true
+          })
+        }
+        
+        if (schemaData.mainEntity && Array.isArray(schemaData.mainEntity)) {
+          previewFields.push({
+            key: 'questionsCount',
+            label: 'Number of Questions',
+            value: schemaData.mainEntity.length,
+            editable: false
+          })
+          
+          // Show first few questions as preview
+          schemaData.mainEntity.slice(0, 3).forEach((qa, index) => {
+            if (qa.name) {
+              previewFields.push({
+                key: `question_${index}`,
+                label: `Question ${index + 1}`,
+                value: qa.name.length > 80 ? qa.name.substring(0, 80) + '...' : qa.name,
+                editable: true
+              })
+            }
+          })
+        }
+        
+        if (schemaData.publisher?.name) {
+          previewFields.push({
+            key: 'publisherName',
+            label: 'Publisher',
+            value: schemaData.publisher.name,
+            editable: true
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
+      // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
           key: 'name',
@@ -125,6 +170,72 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
       const schemaData = schema.schema_data
       const allFields = []
       
+      // Handle FAQPage schema type
+      if (schemaData['@type'] === 'FAQPage') {
+        if (schemaData.url) {
+          allFields.push({
+            key: 'url',
+            label: 'FAQ Page URL',
+            value: schemaData.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'The URL of the FAQ page'
+          })
+        }
+        
+        if (schemaData.mainEntity && Array.isArray(schemaData.mainEntity)) {
+          // Add each question and answer pair
+          schemaData.mainEntity.forEach((qa, index) => {
+            if (qa.name) {
+              allFields.push({
+                key: `question_${index}`,
+                label: `Question ${index + 1}`,
+                value: qa.name,
+                editable: true,
+                fieldType: 'text',
+                description: `FAQ question #${index + 1}`
+              })
+            }
+            
+            if (qa.acceptedAnswer?.text) {
+              allFields.push({
+                key: `answer_${index}`,
+                label: `Answer ${index + 1}`,
+                value: qa.acceptedAnswer.text,
+                editable: true,
+                fieldType: 'textarea',
+                description: `FAQ answer for question #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        if (schemaData.publisher?.name) {
+          allFields.push({
+            key: 'publisherName',
+            label: 'Publisher Name',
+            value: schemaData.publisher.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Organization publishing the FAQ'
+          })
+        }
+        
+        if (schemaData.publisher?.description) {
+          allFields.push({
+            key: 'publisherDescription',
+            label: 'Publisher Description',
+            value: schemaData.publisher.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Description of the publishing organization'
+          })
+        }
+        
+        return allFields
+      }
+      
+      // Handle other schema types (Service, Product, etc.) - existing code
       if (schemaData.name) {
         allFields.push({
           key: 'name',
