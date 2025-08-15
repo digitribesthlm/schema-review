@@ -99,7 +99,6 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
         initialFields[key] = typeof field === 'object' && field !== null ? field.value : field
       })
     } else if (schema.schema_data) {
-      // Create basic editable fields from schema_data if editable_fields don't exist
       const schemaData = schema.schema_data
       
       // Handle FAQPage schema type
@@ -255,38 +254,48 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
       // Handle Service schema type
       else if (schemaData['@type'] === 'Service') {
         if (schemaData.name) initialFields.name = schemaData.name
+        if (schemaData.alternateName) initialFields.alternateName = schemaData.alternateName
         if (schemaData.description) initialFields.description = schemaData.description
         if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
-        if (schemaData.category) initialFields.category = schemaData.category
         
-        // Provider organization
-        if (schemaData.provider?.name) initialFields.providerName = schemaData.provider.name
-        if (schemaData.provider?.url) initialFields.providerUrl = schemaData.provider.url
-        
-        // Audience
-        if (schemaData.audience?.audienceType) initialFields.audienceType = schemaData.audience.audienceType
-        
-        // Area served
-        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
-          schemaData.areaServed.forEach((area, index) => {
-            const areaName = area.name || area
-            initialFields[`areaServed_${index}`] = areaName
-          })
+        // Handle category as both string and array
+        if (schemaData.category) {
+          const categoryValue = Array.isArray(schemaData.category) ? 
+            schemaData.category.join(', ') : 
+            schemaData.category
+          initialFields.category = categoryValue
         }
         
-        // Service channels
-        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
-          schemaData.availableChannel.forEach((channel, index) => {
-            if (channel.serviceType) initialFields[`channel_${index}_type`] = channel.serviceType
-            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
-              initialFields[`channel_${index}_languages`] = channel.availableLanguage.join(', ')
+        // Handle multiple audiences
+        if (schemaData.audience) {
+          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
+          
+          audiences.forEach((audience, index) => {
+            if (audience.audienceType) initialFields[`audience_${index}_type`] = audience.audienceType
+            if (audience.geographicArea?.name) initialFields[`audience_${index}_geography`] = audience.geographicArea.name
+            if (audience.numberOfEmployees?.minValue && audience.numberOfEmployees?.maxValue) {
+              initialFields[`audience_${index}_employees`] = `${audience.numberOfEmployees.minValue}-${audience.numberOfEmployees.maxValue}`
             }
           })
         }
         
-        // Service output
-        if (schemaData.serviceOutput?.name) initialFields.serviceOutputName = schemaData.serviceOutput.name
-        if (schemaData.serviceOutput?.description) initialFields.serviceOutputDescription = schemaData.serviceOutput.description
+        // Service areas (industries)
+        if (schemaData.serviceArea && Array.isArray(schemaData.serviceArea)) {
+          schemaData.serviceArea.forEach((area, index) => {
+            initialFields[`serviceArea_${index}`] = area
+          })
+        }
+        
+        // Handle multiple service outputs
+        if (schemaData.serviceOutput) {
+          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
+          
+          outputs.forEach((output, index) => {
+            if (output.name) initialFields[`serviceOutput_${index}_name`] = output.name
+            if (output.description) initialFields[`serviceOutput_${index}_description`] = output.description
+            if (output['@type']) initialFields[`serviceOutput_${index}_type`] = output['@type']
+          })
+        }
         
         // Offers and pricing
         if (schemaData.offers?.priceRange) initialFields.offerPriceRange = schemaData.offers.priceRange
@@ -295,7 +304,29 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
         if (schemaData.offers?.validFrom) initialFields.offerValidFrom = schemaData.offers.validFrom
         if (schemaData.offers?.validThrough) initialFields.offerValidThrough = schemaData.offers.validThrough
         
-        // Offer catalog
+        // Warranty information
+        if (schemaData.offers?.warranty?.durationOfWarranty?.value) {
+          initialFields.warrantyDuration = `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`
+        }
+        if (schemaData.offers?.warranty?.warrantyScope) {
+          initialFields.warrantyScope = schemaData.offers.warranty.warrantyScope
+        }
+        
+        // Additional properties
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          schemaData.additionalProperty.forEach((property, index) => {
+            if (property.name && property.value) {
+              initialFields[`additionalProperty_${index}`] = property.value
+            }
+          })
+        }
+        
+        // Subscription requirement
+        if (typeof schemaData.requiresSubscription === 'boolean') {
+          initialFields.requiresSubscription = schemaData.requiresSubscription ? 'Yes' : 'No'
+        }
+        
+        // Offer catalog (if exists)
         if (schemaData.hasOfferCatalog?.name) initialFields.offerCatalogName = schemaData.hasOfferCatalog.name
         if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
           schemaData.hasOfferCatalog.itemListElement.forEach((item, index) => {
@@ -1012,6 +1043,15 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
+        if (schemaData.alternateName) {
+          allFields.alternateName = {
+            value: schemaData.alternateName,
+            field_type: 'text',
+            editable: true,
+            description: 'Alternate name or trading name'
+          }
+        }
+        
         if (schemaData.description) {
           allFields.description = {
             value: schemaData.description,
@@ -1039,88 +1079,84 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
-        // Provider organization
-        if (schemaData.provider?.name) {
-          allFields.providerName = {
-            value: schemaData.provider.name,
-            field_type: 'text',
-            editable: true,
-            description: 'Service provider organization'
-          }
-        }
-        
-        if (schemaData.provider?.url) {
-          allFields.providerUrl = {
-            value: schemaData.provider.url,
-            field_type: 'url',
-            editable: true,
-            description: 'Provider website URL'
-          }
-        }
-        
-        // Audience
-        if (schemaData.audience?.audienceType) {
-          allFields.audienceType = {
-            value: schemaData.audience.audienceType,
-            field_type: 'text',
-            editable: true,
-            description: 'Target audience type'
-          }
-        }
-        
-        // Area served
-        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
-          schemaData.areaServed.forEach((area, index) => {
-            const areaName = area.name || area
-            allFields[`areaServed_${index}`] = {
-              value: areaName,
-              field_type: 'text',
-              editable: true,
-              description: `Geographic area served #${index + 1}`
-            }
-          })
-        }
-        
-        // Service channels
-        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
-          schemaData.availableChannel.forEach((channel, index) => {
-            if (channel.serviceType) {
-              allFields[`channel_${index}_type`] = {
-                value: channel.serviceType,
+        // Handle multiple audiences
+        if (schemaData.audience) {
+          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
+          
+          audiences.forEach((audience, index) => {
+            if (audience.audienceType) {
+              allFields[`audience_${index}_type`] = {
+                value: audience.audienceType,
                 field_type: 'text',
                 editable: true,
-                description: `Service channel #${index + 1} type`
+                description: `Target audience type #${index + 1}`
               }
             }
             
-            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
-              allFields[`channel_${index}_languages`] = {
-                value: channel.availableLanguage.join(', '),
+            if (audience.geographicArea?.name) {
+              allFields[`audience_${index}_geography`] = {
+                value: audience.geographicArea.name,
                 field_type: 'text',
                 editable: true,
-                description: `Languages for channel #${index + 1}`
+                description: `Geographic focus for audience #${index + 1}`
+              }
+            }
+            
+            if (audience.numberOfEmployees?.minValue && audience.numberOfEmployees?.maxValue) {
+              allFields[`audience_${index}_employees`] = {
+                value: `${audience.numberOfEmployees.minValue}-${audience.numberOfEmployees.maxValue}`,
+                field_type: 'text',
+                editable: true,
+                description: `Employee count range for audience #${index + 1}`
               }
             }
           })
         }
         
-        // Service output
-        if (schemaData.serviceOutput?.name) {
-          allFields.serviceOutputName = {
-            value: schemaData.serviceOutput.name,
-            field_type: 'text',
-            editable: true,
-            description: 'Service output/deliverable name'
-          }
+        // Service areas (industries)
+        if (schemaData.serviceArea && Array.isArray(schemaData.serviceArea)) {
+          schemaData.serviceArea.forEach((area, index) => {
+            allFields[`serviceArea_${index}`] = {
+              value: area,
+              field_type: 'text',
+              editable: true,
+              description: `Industry sector #${index + 1} served`
+            }
+          })
         }
         
-        if (schemaData.serviceOutput?.description) {
-          allFields.serviceOutputDescription = {
-            value: schemaData.serviceOutput.description,
-            field_type: 'textarea',
-            editable: true,
-            description: 'Service output description'
-          }
+        // Handle multiple service outputs (override existing single output handling)
+        if (schemaData.serviceOutput) {
+          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
+          
+          outputs.forEach((output, index) => {
+            if (output.name) {
+              allFields[`serviceOutput_${index}_name`] = {
+                value: output.name,
+                field_type: 'text',
+                editable: true,
+                description: `Service output #${index + 1} name`
+              }
+            }
+            
+            if (output.description) {
+              allFields[`serviceOutput_${index}_description`] = {
+                value: output.description,
+                field_type: 'textarea',
+                editable: true,
+                description: `Service output #${index + 1} description`
+              }
+            }
+            
+            if (output['@type']) {
+              allFields[`serviceOutput_${index}_type`] = {
+                value: output['@type'],
+                field_type: 'text',
+                editable: true,
+                description: `Service output #${index + 1} schema type`
+              }
+            }
+          })
         }
         
         // Offers and pricing
@@ -1166,6 +1202,48 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
             field_type: 'date',
             editable: true,
             description: 'Offer valid until date'
+          }
+        }
+        
+        // Warranty information
+        if (schemaData.offers?.warranty?.durationOfWarranty?.value) {
+          allFields.warrantyDuration = {
+            value: `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`,
+            field_type: 'text',
+            editable: true,
+            description: 'Warranty duration'
+          }
+        }
+        if (schemaData.offers?.warranty?.warrantyScope) {
+          allFields.warrantyScope = {
+            value: schemaData.offers.warranty.warrantyScope,
+            field_type: 'text',
+            editable: true,
+            description: 'Warranty scope'
+          }
+        }
+        
+        // Additional properties
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          schemaData.additionalProperty.forEach((property, index) => {
+            if (property.name && property.value) {
+              allFields[`additionalProperty_${index}`] = {
+                value: property.value,
+                field_type: 'text',
+                editable: true,
+                description: `Additional property #${index + 1}`
+              }
+            }
+          })
+        }
+        
+        // Subscription requirement
+        if (typeof schemaData.requiresSubscription === 'boolean') {
+          allFields.requiresSubscription = {
+            value: schemaData.requiresSubscription ? 'Yes' : 'No',
+            field_type: 'text',
+            editable: true,
+            description: 'Requires subscription'
           }
         }
         

@@ -378,6 +378,15 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           })
         }
         
+        if (schemaData.alternateName) {
+          previewFields.push({
+            key: 'alternateName',
+            label: 'Alternate Name',
+            value: schemaData.alternateName,
+            editable: true
+          })
+        }
+        
         if (schemaData.serviceType) {
           previewFields.push({
             key: 'serviceType',
@@ -387,29 +396,49 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           })
         }
         
+        // Handle category as both string and array
         if (schemaData.category) {
+          const categoryValue = Array.isArray(schemaData.category) ? 
+            schemaData.category.join(', ') : 
+            schemaData.category
           previewFields.push({
             key: 'category',
-            label: 'Category',
-            value: schemaData.category,
+            label: 'Categories',
+            value: categoryValue,
             editable: true
           })
         }
         
-        if (schemaData.audience?.audienceType) {
+        // Handle audience as both single and array
+        if (schemaData.audience) {
+          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
+          const audienceTypes = audiences.map(aud => aud.audienceType).filter(Boolean).join(', ')
           previewFields.push({
             key: 'audience',
-            label: 'Target Audience',
-            value: schemaData.audience.audienceType,
+            label: 'Target Audiences',
+            value: `${audiences.length} audience${audiences.length > 1 ? 's' : ''}: ${audienceTypes}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.serviceArea && Array.isArray(schemaData.serviceArea)) {
+          previewFields.push({
+            key: 'serviceArea',
+            label: 'Industry Sectors',
+            value: `${schemaData.serviceArea.length} sectors: ${schemaData.serviceArea.join(', ')}`,
             editable: false
           })
         }
         
         if (schemaData.offers?.priceRange) {
+          let priceDisplay = `${schemaData.offers.priceRange} ${schemaData.offers.priceCurrency || ''}`
+          if (schemaData.offers.warranty?.durationOfWarranty?.value) {
+            priceDisplay += ` (${schemaData.offers.warranty.durationOfWarranty.value}mo warranty)`
+          }
           previewFields.push({
             key: 'priceRange',
-            label: 'Price Range',
-            value: `${schemaData.offers.priceRange} ${schemaData.offers.priceCurrency || ''}`,
+            label: 'Price & Warranty',
+            value: priceDisplay,
             editable: false
           })
         }
@@ -418,45 +447,42 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           const channels = schemaData.availableChannel.map(channel => channel.serviceType || 'Service').join(', ')
           previewFields.push({
             key: 'channels',
-            label: 'Service Channels',
-            value: `${schemaData.availableChannel.length} channels: ${channels}`,
+            label: 'Implementation Types',
+            value: `${schemaData.availableChannel.length} types: ${channels}`,
             editable: false
           })
+        }
+        
+        // Handle serviceOutput as both single and array
+        if (schemaData.serviceOutput) {
+          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
+          const outputNames = outputs.map(output => output.name).filter(Boolean).join(', ')
+          previewFields.push({
+            key: 'serviceOutput',
+            label: 'Deliverables',
+            value: `${outputs.length} output${outputs.length > 1 ? 's' : ''}: ${outputNames}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          const timeline = schemaData.additionalProperty.find(prop => prop.name === 'Implementation Timeline')
+          if (timeline) {
+            previewFields.push({
+              key: 'timeline',
+              label: 'Timeline',
+              value: timeline.value,
+              editable: false
+            })
+          }
         }
         
         if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
           const countries = schemaData.areaServed.map(area => area.name || area).join(', ')
           previewFields.push({
             key: 'areaServed',
-            label: 'Areas Served',
+            label: 'Geographic Coverage',
             value: `${schemaData.areaServed.length} countries: ${countries.length > 40 ? countries.substring(0, 40) + '...' : countries}`,
-            editable: false
-          })
-        }
-        
-        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
-          previewFields.push({
-            key: 'offerCatalog',
-            label: 'Service Catalog',
-            value: `${schemaData.hasOfferCatalog.itemListElement.length} services available`,
-            editable: false
-          })
-        }
-        
-        if (schemaData.provider?.name) {
-          previewFields.push({
-            key: 'provider',
-            label: 'Service Provider',
-            value: schemaData.provider.name,
-            editable: false
-          })
-        }
-        
-        if (schemaData.serviceOutput?.name) {
-          previewFields.push({
-            key: 'serviceOutput',
-            label: 'Service Output',
-            value: schemaData.serviceOutput.name,
             editable: false
           })
         }
@@ -1542,14 +1568,14 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           })
         }
         
-        if (schemaData.description) {
+        if (schemaData.alternateName) {
           allFields.push({
-            key: 'description',
-            label: 'Service Description',
-            value: schemaData.description,
+            key: 'alternateName',
+            label: 'Alternate Name',
+            value: schemaData.alternateName,
             editable: true,
-            fieldType: 'textarea',
-            description: 'Detailed description of the service'
+            fieldType: 'text',
+            description: 'Commonly known as or trading name'
           })
         }
         
@@ -1564,14 +1590,18 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           })
         }
         
+        // Handle category as both string and array
         if (schemaData.category) {
+          const categoryValue = Array.isArray(schemaData.category) ? 
+            schemaData.category.join(', ') : 
+            schemaData.category
           allFields.push({
             key: 'category',
-            label: 'Service Category',
-            value: schemaData.category,
+            label: 'Service Categories',
+            value: categoryValue,
             editable: true,
             fieldType: 'text',
-            description: 'General category classification'
+            description: 'Service category classifications'
           })
         }
         
@@ -1599,11 +1629,13 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         }
         
         // Audience information
-        if (schemaData.audience?.audienceType) {
+        if (schemaData.audience) {
+          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
+          const audienceTypes = audiences.map(aud => aud.audienceType).filter(Boolean).join(', ')
           allFields.push({
-            key: 'audienceType',
-            label: 'Target Audience',
-            value: schemaData.audience.audienceType,
+            key: 'audience',
+            label: 'Target Audiences',
+            value: `${audiences.length} audience${audiences.length > 1 ? 's' : ''}: ${audienceTypes}`,
             editable: true,
             fieldType: 'text',
             description: 'Primary audience for this service'
@@ -1653,11 +1685,13 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         }
         
         // Service output/deliverables
-        if (schemaData.serviceOutput?.name) {
+        if (schemaData.serviceOutput) {
+          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
+          const outputNames = outputs.map(output => output.name).filter(Boolean).join(', ')
           allFields.push({
-            key: 'serviceOutputName',
-            label: 'Service Output',
-            value: schemaData.serviceOutput.name,
+            key: 'serviceOutput',
+            label: 'Deliverables',
+            value: `${outputs.length} output${outputs.length > 1 ? 's' : ''}: ${outputNames}`,
             editable: true,
             fieldType: 'text',
             description: 'Main deliverable or output of the service'
@@ -1815,6 +1849,153 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
               description: 'Time when service stops being available'
             })
           }
+        }
+        
+        // Handle multiple audiences with complex structures
+        if (schemaData.audience) {
+          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
+          
+          audiences.forEach((audience, index) => {
+            if (audience.audienceType) {
+              allFields.push({
+                key: `audience_${index}_type`,
+                label: `Target Audience ${index + 1}`,
+                value: audience.audienceType,
+                editable: true,
+                fieldType: 'text',
+                description: `Audience type #${index + 1}`
+              })
+            }
+            
+            if (audience.geographicArea?.name) {
+              allFields.push({
+                key: `audience_${index}_geography`,
+                label: `Audience ${index + 1} Geography`,
+                value: audience.geographicArea.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Geographic focus for audience #${index + 1}`
+              })
+            }
+            
+            if (audience.numberOfEmployees?.minValue && audience.numberOfEmployees?.maxValue) {
+              allFields.push({
+                key: `audience_${index}_employees`,
+                label: `Audience ${index + 1} Employee Range`,
+                value: `${audience.numberOfEmployees.minValue}-${audience.numberOfEmployees.maxValue}`,
+                editable: true,
+                fieldType: 'text',
+                description: `Employee count range for audience #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Service areas (industries)
+        if (schemaData.serviceArea && Array.isArray(schemaData.serviceArea)) {
+          schemaData.serviceArea.forEach((area, index) => {
+            allFields.push({
+              key: `serviceArea_${index}`,
+              label: `Industry Sector ${index + 1}`,
+              value: area,
+              editable: true,
+              fieldType: 'text',
+              description: `Industry sector #${index + 1} served`
+            })
+          })
+        }
+        
+        // Handle multiple service outputs
+        if (schemaData.serviceOutput) {
+          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
+          
+          outputs.forEach((output, index) => {
+            if (output.name) {
+              allFields.push({
+                key: `serviceOutput_${index}_name`,
+                label: `Service Output ${index + 1}`,
+                value: output.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Service deliverable #${index + 1} name`
+              })
+            }
+            
+            if (output.description) {
+              allFields.push({
+                key: `serviceOutput_${index}_description`,
+                label: `Output ${index + 1} Description`,
+                value: output.description,
+                editable: true,
+                fieldType: 'textarea',
+                description: `Description for deliverable #${index + 1}`
+              })
+            }
+            
+            if (output['@type']) {
+              allFields.push({
+                key: `serviceOutput_${index}_type`,
+                label: `Output ${index + 1} Type`,
+                value: output['@type'],
+                editable: true,
+                fieldType: 'text',
+                description: `Schema type for deliverable #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Enhanced offers with warranty
+        if (schemaData.offers?.warranty) {
+          if (schemaData.offers.warranty.durationOfWarranty?.value) {
+            allFields.push({
+              key: 'warrantyDuration',
+              label: 'Warranty Duration',
+              value: `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`,
+              editable: true,
+              fieldType: 'text',
+              description: 'Warranty period duration'
+            })
+          }
+          
+          if (schemaData.offers.warranty.warrantyScope) {
+            allFields.push({
+              key: 'warrantyScope',
+              label: 'Warranty Coverage',
+              value: schemaData.offers.warranty.warrantyScope,
+              editable: true,
+              fieldType: 'textarea',
+              description: 'What the warranty covers'
+            })
+          }
+        }
+        
+        // Additional service properties
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          schemaData.additionalProperty.forEach((property, index) => {
+            if (property.name && property.value) {
+              allFields.push({
+                key: `additionalProperty_${index}`,
+                label: property.name,
+                value: property.value,
+                editable: true,
+                fieldType: 'text',
+                description: `Additional service property: ${property.name}`
+              })
+            }
+          })
+        }
+        
+        // Subscription requirement
+        if (typeof schemaData.requiresSubscription === 'boolean') {
+          allFields.push({
+            key: 'requiresSubscription',
+            label: 'Requires Subscription',
+            value: schemaData.requiresSubscription ? 'Yes' : 'No',
+            editable: true,
+            fieldType: 'text',
+            description: 'Whether service requires ongoing subscription'
+          })
         }
         
         return allFields
