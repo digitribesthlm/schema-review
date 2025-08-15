@@ -159,16 +159,40 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
         if (schemaData.name) initialFields.name = schemaData.name
         if (schemaData.alternateName) initialFields.alternateName = schemaData.alternateName
         if (schemaData.url) initialFields.url = schemaData.url
-        if (schemaData.logo) initialFields.logo = schemaData.logo
+        
+        // Handle logo as both simple URL and ImageObject
+        const logoUrl = schemaData.logo?.url || schemaData.logo
+        if (logoUrl) initialFields.logoUrl = logoUrl
+        if (schemaData.logo?.width) initialFields.logoWidth = schemaData.logo.width
+        if (schemaData.logo?.height) initialFields.logoHeight = schemaData.logo.height
+        
         if (schemaData.description) initialFields.description = schemaData.description
+        if (schemaData.slogan) initialFields.slogan = schemaData.slogan
         if (schemaData.foundingDate) initialFields.foundingDate = schemaData.foundingDate
-        if (schemaData.numberOfEmployees) initialFields.numberOfEmployees = schemaData.numberOfEmployees
+        
+        // Handle numberOfEmployees as both string and QuantitativeValue
+        const employeeCount = schemaData.numberOfEmployees?.value || schemaData.numberOfEmployees
+        if (employeeCount) initialFields.numberOfEmployees = employeeCount
+        if (schemaData.numberOfEmployees?.unitText) initialFields.employeeUnit = schemaData.numberOfEmployees.unitText
+        
+        // Parent organization
+        if (schemaData.parentOrganization?.name) initialFields.parentOrgName = schemaData.parentOrganization.name
+        if (schemaData.parentOrganization?.url) initialFields.parentOrgUrl = schemaData.parentOrganization.url
         
         // Address details
         if (schemaData.address?.streetAddress) initialFields.addressStreet = schemaData.address.streetAddress
         if (schemaData.address?.addressLocality) initialFields.addressCity = schemaData.address.addressLocality
         if (schemaData.address?.postalCode) initialFields.addressPostalCode = schemaData.address.postalCode
         if (schemaData.address?.addressCountry) initialFields.addressCountry = schemaData.address.addressCountry
+        if (schemaData.address?.addressRegion) initialFields.addressRegion = schemaData.address.addressRegion
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            initialFields[`areaServed_${index}`] = areaName
+          })
+        }
         
         // Contact points
         if (schemaData.contactPoint && Array.isArray(schemaData.contactPoint)) {
@@ -180,6 +204,45 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
             }
           })
         }
+        
+        // Departments
+        if (schemaData.department && Array.isArray(schemaData.department)) {
+          schemaData.department.forEach((dept, index) => {
+            if (dept.name) initialFields[`department_${index}_name`] = dept.name
+            if (dept.contactPoint?.telephone) initialFields[`department_${index}_phone`] = dept.contactPoint.telephone
+            if (dept.contactPoint?.email) initialFields[`department_${index}_email`] = dept.contactPoint.email
+          })
+        }
+        
+        // Expertise areas
+        if (schemaData.knowsAbout && Array.isArray(schemaData.knowsAbout)) {
+          initialFields.knowsAbout = schemaData.knowsAbout.join(', ')
+        }
+        
+        // Partnerships
+        if (schemaData.memberOf && Array.isArray(schemaData.memberOf)) {
+          schemaData.memberOf.forEach((partnership, index) => {
+            if (partnership.name) initialFields[`memberOf_${index}_name`] = partnership.name
+            if (partnership.url) initialFields[`memberOf_${index}_url`] = partnership.url
+          })
+        }
+        
+        // Awards
+        if (schemaData.award && Array.isArray(schemaData.award)) {
+          schemaData.award.forEach((award, index) => {
+            initialFields[`award_${index}`] = award
+          })
+        }
+        
+        // Aggregate rating
+        if (schemaData.aggregateRating?.ratingValue) initialFields.ratingValue = schemaData.aggregateRating.ratingValue
+        if (schemaData.aggregateRating?.bestRating) initialFields.bestRating = schemaData.aggregateRating.bestRating
+        if (schemaData.aggregateRating?.ratingCount) initialFields.ratingCount = schemaData.aggregateRating.ratingCount
+        if (schemaData.aggregateRating?.description) initialFields.ratingDescription = schemaData.aggregateRating.description
+        
+        // Business identifiers
+        if (schemaData.taxID) initialFields.taxID = schemaData.taxID
+        if (schemaData.vatID) initialFields.vatID = schemaData.vatID
         
         // Social media links
         if (schemaData.sameAs && Array.isArray(schemaData.sameAs)) {
@@ -479,12 +542,32 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
-        if (schemaData.logo) {
-          allFields.logo = {
-            value: schemaData.logo,
+        // Handle logo as both simple URL and ImageObject
+        const logoUrl = schemaData.logo?.url || schemaData.logo
+        if (logoUrl) {
+          allFields.logoUrl = {
+            value: logoUrl,
             field_type: 'url',
             editable: true,
             description: 'Organization logo URL'
+          }
+        }
+        
+        if (schemaData.logo?.width) {
+          allFields.logoWidth = {
+            value: schemaData.logo.width,
+            field_type: 'text',
+            editable: true,
+            description: 'Logo image width'
+          }
+        }
+        
+        if (schemaData.logo?.height) {
+          allFields.logoHeight = {
+            value: schemaData.logo.height,
+            field_type: 'text',
+            editable: true,
+            description: 'Logo image height'
           }
         }
         
@@ -497,6 +580,15 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
+        if (schemaData.slogan) {
+          allFields.slogan = {
+            value: schemaData.slogan,
+            field_type: 'text',
+            editable: true,
+            description: 'Organization slogan'
+          }
+        }
+        
         if (schemaData.foundingDate) {
           allFields.foundingDate = {
             value: schemaData.foundingDate,
@@ -506,12 +598,42 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
-        if (schemaData.numberOfEmployees) {
+        // Handle numberOfEmployees as both string and QuantitativeValue
+        const employeeCount = schemaData.numberOfEmployees?.value || schemaData.numberOfEmployees
+        if (employeeCount) {
           allFields.numberOfEmployees = {
-            value: schemaData.numberOfEmployees,
+            value: employeeCount,
             field_type: 'text',
             editable: true,
             description: 'Number of employees'
+          }
+        }
+        
+        if (schemaData.numberOfEmployees?.unitText) {
+          allFields.employeeUnit = {
+            value: schemaData.numberOfEmployees.unitText,
+            field_type: 'text',
+            editable: true,
+            description: 'Employee count unit'
+          }
+        }
+        
+        // Parent organization
+        if (schemaData.parentOrganization?.name) {
+          allFields.parentOrgName = {
+            value: schemaData.parentOrganization.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Parent organization name'
+          }
+        }
+        
+        if (schemaData.parentOrganization?.url) {
+          allFields.parentOrgUrl = {
+            value: schemaData.parentOrganization.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Parent organization website'
           }
         }
         
@@ -534,6 +656,15 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           }
         }
         
+        if (schemaData.address?.addressRegion) {
+          allFields.addressRegion = {
+            value: schemaData.address.addressRegion,
+            field_type: 'text',
+            editable: true,
+            description: 'Region or state'
+          }
+        }
+        
         if (schemaData.address?.postalCode) {
           allFields.addressPostalCode = {
             value: schemaData.address.postalCode,
@@ -550,6 +681,19 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
             editable: true,
             description: 'Country'
           }
+        }
+        
+        // Area served
+        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
+          schemaData.areaServed.forEach((area, index) => {
+            const areaName = area.name || area
+            allFields[`areaServed_${index}`] = {
+              value: areaName,
+              field_type: 'text',
+              editable: true,
+              description: `Area served #${index + 1}`
+            }
+          })
         }
         
         // Contact points
@@ -582,6 +726,139 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
               }
             }
           })
+        }
+        
+        // Departments
+        if (schemaData.department && Array.isArray(schemaData.department)) {
+          schemaData.department.forEach((dept, index) => {
+            if (dept.name) {
+              allFields[`department_${index}_name`] = {
+                value: dept.name,
+                field_type: 'text',
+                editable: true,
+                description: `Department #${index + 1} name`
+              }
+            }
+            
+            if (dept.contactPoint?.telephone) {
+              allFields[`department_${index}_phone`] = {
+                value: dept.contactPoint.telephone,
+                field_type: 'tel',
+                editable: true,
+                description: `Department #${index + 1} phone`
+              }
+            }
+            
+            if (dept.contactPoint?.email) {
+              allFields[`department_${index}_email`] = {
+                value: dept.contactPoint.email,
+                field_type: 'email',
+                editable: true,
+                description: `Department #${index + 1} email`
+              }
+            }
+          })
+        }
+        
+        // Expertise areas
+        if (schemaData.knowsAbout && Array.isArray(schemaData.knowsAbout)) {
+          allFields.knowsAbout = {
+            value: schemaData.knowsAbout.join(', '),
+            field_type: 'textarea',
+            editable: true,
+            description: 'Areas of expertise (comma-separated)'
+          }
+        }
+        
+        // Partnerships/memberships
+        if (schemaData.memberOf && Array.isArray(schemaData.memberOf)) {
+          schemaData.memberOf.forEach((partnership, index) => {
+            if (partnership.name) {
+              allFields[`memberOf_${index}_name`] = {
+                value: partnership.name,
+                field_type: 'text',
+                editable: true,
+                description: `Partnership #${index + 1} name`
+              }
+            }
+            
+            if (partnership.url) {
+              allFields[`memberOf_${index}_url`] = {
+                value: partnership.url,
+                field_type: 'url',
+                editable: true,
+                description: `Partnership #${index + 1} URL`
+              }
+            }
+          })
+        }
+        
+        // Awards
+        if (schemaData.award && Array.isArray(schemaData.award)) {
+          schemaData.award.forEach((award, index) => {
+            allFields[`award_${index}`] = {
+              value: award,
+              field_type: 'text',
+              editable: true,
+              description: `Award #${index + 1}`
+            }
+          })
+        }
+        
+        // Aggregate rating
+        if (schemaData.aggregateRating?.ratingValue) {
+          allFields.ratingValue = {
+            value: schemaData.aggregateRating.ratingValue,
+            field_type: 'text',
+            editable: true,
+            description: 'Rating value'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.bestRating) {
+          allFields.bestRating = {
+            value: schemaData.aggregateRating.bestRating,
+            field_type: 'text',
+            editable: true,
+            description: 'Best possible rating'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.ratingCount) {
+          allFields.ratingCount = {
+            value: schemaData.aggregateRating.ratingCount,
+            field_type: 'text',
+            editable: true,
+            description: 'Number of ratings'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.description) {
+          allFields.ratingDescription = {
+            value: schemaData.aggregateRating.description,
+            field_type: 'text',
+            editable: true,
+            description: 'Rating description'
+          }
+        }
+        
+        // Business identifiers
+        if (schemaData.taxID) {
+          allFields.taxID = {
+            value: schemaData.taxID,
+            field_type: 'text',
+            editable: true,
+            description: 'Tax identification number'
+          }
+        }
+        
+        if (schemaData.vatID) {
+          allFields.vatID = {
+            value: schemaData.vatID,
+            field_type: 'text',
+            editable: true,
+            description: 'VAT identification number'
+          }
         }
         
         // Social media links
