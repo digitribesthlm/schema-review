@@ -86,6 +86,79 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return previewFields.slice(0, 6)
       }
       
+      // Handle Event schema type
+      if (schemaData['@type'] === 'Event') {
+        if (schemaData.name) {
+          previewFields.push({
+            key: 'name',
+            label: 'Event Name',
+            value: schemaData.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.description) {
+          previewFields.push({
+            key: 'description',
+            label: 'Description',
+            value: schemaData.description.length > 100 ? 
+              schemaData.description.substring(0, 100) + '...' : 
+              schemaData.description,
+            editable: true
+          })
+        }
+        
+        if (schemaData.startDate && schemaData.endDate) {
+          const dateRange = schemaData.startDate === schemaData.endDate ? 
+            schemaData.startDate : 
+            `${schemaData.startDate} to ${schemaData.endDate}`
+          previewFields.push({
+            key: 'dateRange',
+            label: 'Event Date(s)',
+            value: dateRange,
+            editable: false
+          })
+        }
+        
+        if (schemaData.location?.name) {
+          previewFields.push({
+            key: 'locationName',
+            label: 'Location',
+            value: schemaData.location.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.organizer?.name) {
+          previewFields.push({
+            key: 'organizerName',
+            label: 'Organizer',
+            value: schemaData.organizer.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.agenda && Array.isArray(schemaData.agenda)) {
+          previewFields.push({
+            key: 'agendaCount',
+            label: 'Agenda Items',
+            value: `${schemaData.agenda.length} items`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.speakers && Array.isArray(schemaData.speakers)) {
+          previewFields.push({
+            key: 'speakersCount',
+            label: 'Speakers',
+            value: `${schemaData.speakers.length} speakers`,
+            editable: false
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
       // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
@@ -229,6 +302,167 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
             editable: true,
             fieldType: 'textarea',
             description: 'Description of the publishing organization'
+          })
+        }
+        
+        return allFields
+      }
+      
+      // Handle Event schema type  
+      if (schemaData['@type'] === 'Event') {
+        if (schemaData.name) {
+          allFields.push({
+            key: 'name',
+            label: 'Event Name',
+            value: schemaData.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Name of the event'
+          })
+        }
+        
+        if (schemaData.description) {
+          allFields.push({
+            key: 'description',
+            label: 'Event Description',
+            value: schemaData.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Detailed description of the event'
+          })
+        }
+        
+        if (schemaData.startDate) {
+          allFields.push({
+            key: 'startDate',
+            label: 'Start Date',
+            value: schemaData.startDate,
+            editable: true,
+            fieldType: 'date',
+            description: 'Event start date'
+          })
+        }
+        
+        if (schemaData.endDate) {
+          allFields.push({
+            key: 'endDate',
+            label: 'End Date',
+            value: schemaData.endDate,
+            editable: true,
+            fieldType: 'date',
+            description: 'Event end date'
+          })
+        }
+        
+        // Location details
+        if (schemaData.location?.name) {
+          allFields.push({
+            key: 'locationName',
+            label: 'Location Name',
+            value: schemaData.location.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Name of the event venue'
+          })
+        }
+        
+        if (schemaData.location?.address?.streetAddress) {
+          allFields.push({
+            key: 'locationAddress',
+            label: 'Street Address',
+            value: schemaData.location.address.streetAddress,
+            editable: true,
+            fieldType: 'text',
+            description: 'Venue street address'
+          })
+        }
+        
+        if (schemaData.location?.address?.addressLocality) {
+          allFields.push({
+            key: 'locationCity',
+            label: 'City',
+            value: schemaData.location.address.addressLocality,
+            editable: true,
+            fieldType: 'text',
+            description: 'Venue city'
+          })
+        }
+        
+        // Organizer details
+        if (schemaData.organizer?.name) {
+          allFields.push({
+            key: 'organizerName',
+            label: 'Organizer Name',
+            value: schemaData.organizer.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Organization hosting the event'
+          })
+        }
+        
+        if (schemaData.organizer?.url) {
+          allFields.push({
+            key: 'organizerUrl',
+            label: 'Organizer Website',
+            value: schemaData.organizer.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Organizer website URL'
+          })
+        }
+        
+        // Offers details
+        if (schemaData.offers?.price) {
+          allFields.push({
+            key: 'offerPrice',
+            label: 'Ticket Price',
+            value: schemaData.offers.price,
+            editable: true,
+            fieldType: 'text',
+            description: 'Event ticket price'
+          })
+        }
+        
+        if (schemaData.offers?.description) {
+          allFields.push({
+            key: 'offerDescription',
+            label: 'Offer Description',
+            value: schemaData.offers.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Description of what\'s included'
+          })
+        }
+        
+        // Agenda items
+        if (schemaData.agenda && Array.isArray(schemaData.agenda)) {
+          schemaData.agenda.forEach((item, index) => {
+            if (item.name) {
+              allFields.push({
+                key: `agenda_${index}`,
+                label: `Agenda Item ${index + 1}`,
+                value: item.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Agenda item #${index + 1}`
+              })
+            }
+          })
+        }
+        
+        // Speakers
+        if (schemaData.speakers && Array.isArray(schemaData.speakers)) {
+          schemaData.speakers.forEach((speaker, index) => {
+            if (speaker.name) {
+              allFields.push({
+                key: `speaker_${index}`,
+                label: `Speaker ${index + 1}`,
+                value: `${speaker.name}${speaker.worksFor?.name ? ` (${speaker.worksFor.name})` : ''}`,
+                editable: true,
+                fieldType: 'text',
+                description: `Speaker #${index + 1} name and organization`
+              })
+            }
           })
         }
         
