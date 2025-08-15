@@ -347,24 +347,99 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           if (schemaData.hoursAvailable.closes) initialFields.hoursCloses = schemaData.hoursAvailable.closes
         }
       }
-      // Handle other schema types
-      else {
+      // Handle Product schema type
+      else if (schemaData['@type'] === 'Product') {
         if (schemaData.name) initialFields.name = schemaData.name
         if (schemaData.description) initialFields.description = schemaData.description
-        if (schemaData.serviceType) initialFields.serviceType = schemaData.serviceType
-        if (schemaData.areaServed) initialFields.areaServed = schemaData.areaServed
-        if (schemaData.image) initialFields.image = schemaData.image
-        if (schemaData.offers?.description) initialFields.offersDescription = schemaData.offers.description
+        if (schemaData.category) initialFields.category = schemaData.category
+        
+        // Product identifiers
+        if (schemaData.productID) initialFields.productID = schemaData.productID
+        if (schemaData.sku) initialFields.sku = schemaData.sku
+        if (schemaData.mpn) initialFields.mpn = schemaData.mpn
+        
+        // Brand information
+        if (schemaData.brand?.name) initialFields.brandName = schemaData.brand.name
+        if (schemaData.brand?.logo) initialFields.brandLogo = schemaData.brand.logo
+        
+        // Manufacturer information
+        if (schemaData.manufacturer?.name) initialFields.manufacturerName = schemaData.manufacturer.name
+        if (schemaData.manufacturer?.url) initialFields.manufacturerUrl = schemaData.manufacturer.url
+        
+        // Seller information
+        if (schemaData.seller?.name) initialFields.sellerName = schemaData.seller.name
+        if (schemaData.seller?.url) initialFields.sellerUrl = schemaData.seller.url
+        
+        // Product images
+        if (schemaData.image && Array.isArray(schemaData.image)) {
+          schemaData.image.forEach((imageUrl, index) => {
+            initialFields[`image_${index}`] = imageUrl
+          })
+        } else if (schemaData.image) {
+          initialFields.image = schemaData.image
+        }
+        
+        // Offers information
+        if (schemaData.offers?.price) initialFields.offerPrice = schemaData.offers.price
+        if (schemaData.offers?.priceCurrency) initialFields.offerCurrency = schemaData.offers.priceCurrency
+        if (schemaData.offers?.availability) initialFields.offerAvailability = schemaData.offers.availability
+        if (schemaData.offers?.itemCondition) initialFields.offerCondition = schemaData.offers.itemCondition
+        if (schemaData.offers?.priceValidUntil) initialFields.priceValidUntil = schemaData.offers.priceValidUntil
+        
+        // Warranty and delivery
+        if (schemaData.offers?.warranty?.durationOfWarranty?.value) {
+          initialFields.warrantyDuration = `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`
+        }
+        if (schemaData.offers?.deliveryLeadTime?.value) {
+          initialFields.deliveryLeadTime = `${schemaData.offers.deliveryLeadTime.value} ${schemaData.offers.deliveryLeadTime.unitCode || 'days'}`
+        }
+        
+        // Rating and reviews
+        if (schemaData.aggregateRating?.ratingValue) initialFields.ratingValue = schemaData.aggregateRating.ratingValue
+        if (schemaData.aggregateRating?.bestRating) initialFields.bestRating = schemaData.aggregateRating.bestRating
+        if (schemaData.aggregateRating?.worstRating) initialFields.worstRating = schemaData.aggregateRating.worstRating
+        if (schemaData.aggregateRating?.ratingCount) initialFields.ratingCount = schemaData.aggregateRating.ratingCount
+        if (schemaData.aggregateRating?.reviewCount) initialFields.reviewCount = schemaData.aggregateRating.reviewCount
+        
+        // Customer reviews
+        if (schemaData.review && Array.isArray(schemaData.review)) {
+          schemaData.review.forEach((review, index) => {
+            if (review.author?.name) initialFields[`review_${index}_author`] = review.author.name
+            if (review.reviewRating?.ratingValue) initialFields[`review_${index}_rating`] = review.reviewRating.ratingValue
+            if (review.reviewBody) initialFields[`review_${index}_body`] = review.reviewBody
+            if (review.datePublished) initialFields[`review_${index}_date`] = review.datePublished
+          })
+        }
+        
+        // Additional properties
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          schemaData.additionalProperty.forEach((property, index) => {
+            if (property.name && property.value) {
+              initialFields[`additionalProperty_${index}`] = property.value
+            }
+          })
+        }
+        
+        // Product relationships
+        if (schemaData.isRelatedTo && Array.isArray(schemaData.isRelatedTo)) {
+          schemaData.isRelatedTo.forEach((relatedProduct, index) => {
+            if (relatedProduct.name) initialFields[`relatedProduct_${index}`] = relatedProduct.name
+          })
+        }
+        
+        if (schemaData.isSimilarTo && Array.isArray(schemaData.isSimilarTo)) {
+          schemaData.isSimilarTo.forEach((similarProduct, index) => {
+            if (similarProduct.name) initialFields[`similarProduct_${index}`] = similarProduct.name
+          })
+        }
       }
-    }
-    
-    // Handle LocalBusiness schema type
-    else if (schemaData['@type'] === 'LocalBusiness') {
-      if (schemaData.name) initialFields.name = schemaData.name
-      if (schemaData.image) initialFields.image = schemaData.image
-      if (schemaData.url) initialFields.url = schemaData.url
-      if (schemaData.telephone) initialFields.telephone = schemaData.telephone
-      if (schemaData.email) initialFields.email = schemaData.email
+      // Handle LocalBusiness schema type
+      else if (schemaData['@type'] === 'LocalBusiness') {
+        if (schemaData.name) initialFields.name = schemaData.name
+        if (schemaData.image) initialFields.image = schemaData.image
+        if (schemaData.url) initialFields.url = schemaData.url
+        if (schemaData.telephone) initialFields.telephone = schemaData.telephone
+        if (schemaData.email) initialFields.email = schemaData.email
       
       // Address details
       if (schemaData.address?.streetAddress) initialFields.addressStreet = schemaData.address.streetAddress
@@ -1569,6 +1644,333 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
                 field_type: 'text',
                 editable: true,
                 description: `Department #${index + 1} contact type`
+              }
+            }
+          })
+        }
+      }
+      // Handle Product schema type
+      else if (schemaData['@type'] === 'Product') {
+        if (schemaData.name) {
+          allFields.name = {
+            value: schemaData.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Product name'
+          }
+        }
+        
+        if (schemaData.description) {
+          allFields.description = {
+            value: schemaData.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Product description'
+          }
+        }
+        
+        if (schemaData.category) {
+          allFields.category = {
+            value: schemaData.category,
+            field_type: 'text',
+            editable: true,
+            description: 'Product category'
+          }
+        }
+        
+        // Product identifiers
+        if (schemaData.productID) {
+          allFields.productID = {
+            value: schemaData.productID,
+            field_type: 'text',
+            editable: true,
+            description: 'Unique product identifier'
+          }
+        }
+        
+        if (schemaData.sku) {
+          allFields.sku = {
+            value: schemaData.sku,
+            field_type: 'text',
+            editable: true,
+            description: 'Stock keeping unit'
+          }
+        }
+        
+        if (schemaData.mpn) {
+          allFields.mpn = {
+            value: schemaData.mpn,
+            field_type: 'text',
+            editable: true,
+            description: 'Manufacturer part number'
+          }
+        }
+        
+        // Brand information
+        if (schemaData.brand?.name) {
+          allFields.brandName = {
+            value: schemaData.brand.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Product brand name'
+          }
+        }
+        
+        if (schemaData.brand?.logo) {
+          allFields.brandLogo = {
+            value: schemaData.brand.logo,
+            field_type: 'url',
+            editable: true,
+            description: 'Brand logo image URL'
+          }
+        }
+        
+        // Manufacturer information
+        if (schemaData.manufacturer?.name) {
+          allFields.manufacturerName = {
+            value: schemaData.manufacturer.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Product manufacturer name'
+          }
+        }
+        
+        if (schemaData.manufacturer?.url) {
+          allFields.manufacturerUrl = {
+            value: schemaData.manufacturer.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Manufacturer website URL'
+          }
+        }
+        
+        // Seller information
+        if (schemaData.seller?.name) {
+          allFields.sellerName = {
+            value: schemaData.seller.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Product seller name'
+          }
+        }
+        
+        if (schemaData.seller?.url) {
+          allFields.sellerUrl = {
+            value: schemaData.seller.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Seller website URL'
+          }
+        }
+        
+        // Product images
+        if (schemaData.image && Array.isArray(schemaData.image)) {
+          schemaData.image.forEach((imageUrl, index) => {
+            allFields[`image_${index}`] = {
+              value: imageUrl,
+              field_type: 'url',
+              editable: true,
+              description: `Product image #${index + 1} URL`
+            }
+          })
+        } else if (schemaData.image) {
+          allFields.image = {
+            value: schemaData.image,
+            field_type: 'url',
+            editable: true,
+            description: 'Product image URL'
+          }
+        }
+        
+        // Offers information
+        if (schemaData.offers?.price) {
+          allFields.offerPrice = {
+            value: schemaData.offers.price,
+            field_type: 'text',
+            editable: true,
+            description: 'Product price'
+          }
+        }
+        
+        if (schemaData.offers?.priceCurrency) {
+          allFields.offerCurrency = {
+            value: schemaData.offers.priceCurrency,
+            field_type: 'text',
+            editable: true,
+            description: 'Currency for pricing'
+          }
+        }
+        
+        if (schemaData.offers?.availability) {
+          allFields.offerAvailability = {
+            value: schemaData.offers.availability,
+            field_type: 'text',
+            editable: true,
+            description: 'Product availability status'
+          }
+        }
+        
+        if (schemaData.offers?.itemCondition) {
+          allFields.offerCondition = {
+            value: schemaData.offers.itemCondition,
+            field_type: 'text',
+            editable: true,
+            description: 'Product condition'
+          }
+        }
+        
+        if (schemaData.offers?.priceValidUntil) {
+          allFields.priceValidUntil = {
+            value: schemaData.offers.priceValidUntil,
+            field_type: 'date',
+            editable: true,
+            description: 'Price validity end date'
+          }
+        }
+        
+        // Warranty information
+        if (schemaData.offers?.warranty?.durationOfWarranty?.value) {
+          allFields.warrantyDuration = {
+            value: `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`,
+            field_type: 'text',
+            editable: true,
+            description: 'Product warranty duration'
+          }
+        }
+        
+        // Delivery information
+        if (schemaData.offers?.deliveryLeadTime?.value) {
+          allFields.deliveryLeadTime = {
+            value: `${schemaData.offers.deliveryLeadTime.value} ${schemaData.offers.deliveryLeadTime.unitCode || 'days'}`,
+            field_type: 'text',
+            editable: true,
+            description: 'Expected delivery time'
+          }
+        }
+        
+        // Rating and reviews
+        if (schemaData.aggregateRating?.ratingValue) {
+          allFields.ratingValue = {
+            value: schemaData.aggregateRating.ratingValue,
+            field_type: 'text',
+            editable: true,
+            description: 'Average customer rating'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.bestRating) {
+          allFields.bestRating = {
+            value: schemaData.aggregateRating.bestRating,
+            field_type: 'text',
+            editable: true,
+            description: 'Maximum possible rating'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.worstRating) {
+          allFields.worstRating = {
+            value: schemaData.aggregateRating.worstRating,
+            field_type: 'text',
+            editable: true,
+            description: 'Minimum possible rating'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.ratingCount) {
+          allFields.ratingCount = {
+            value: schemaData.aggregateRating.ratingCount,
+            field_type: 'text',
+            editable: true,
+            description: 'Total number of ratings'
+          }
+        }
+        
+        if (schemaData.aggregateRating?.reviewCount) {
+          allFields.reviewCount = {
+            value: schemaData.aggregateRating.reviewCount,
+            field_type: 'text',
+            editable: true,
+            description: 'Total number of reviews'
+          }
+        }
+        
+        // Customer reviews
+        if (schemaData.review && Array.isArray(schemaData.review)) {
+          schemaData.review.forEach((review, index) => {
+            if (review.author?.name) {
+              allFields[`review_${index}_author`] = {
+                value: review.author.name,
+                field_type: 'text',
+                editable: true,
+                description: `Customer review #${index + 1} author`
+              }
+            }
+            
+            if (review.reviewRating?.ratingValue) {
+              allFields[`review_${index}_rating`] = {
+                value: review.reviewRating.ratingValue,
+                field_type: 'text',
+                editable: true,
+                description: `Customer review #${index + 1} rating`
+              }
+            }
+            
+            if (review.reviewBody) {
+              allFields[`review_${index}_body`] = {
+                value: review.reviewBody,
+                field_type: 'textarea',
+                editable: true,
+                description: `Customer review #${index + 1} content`
+              }
+            }
+            
+            if (review.datePublished) {
+              allFields[`review_${index}_date`] = {
+                value: review.datePublished,
+                field_type: 'date',
+                editable: true,
+                description: `Customer review #${index + 1} publication date`
+              }
+            }
+          })
+        }
+        
+        // Additional properties
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          schemaData.additionalProperty.forEach((property, index) => {
+            if (property.name && property.value) {
+              allFields[`additionalProperty_${index}`] = {
+                value: property.value,
+                field_type: 'text',
+                editable: true,
+                description: `Additional product property: ${property.name}`
+              }
+            }
+          })
+        }
+        
+        // Product relationships
+        if (schemaData.isRelatedTo && Array.isArray(schemaData.isRelatedTo)) {
+          schemaData.isRelatedTo.forEach((relatedProduct, index) => {
+            if (relatedProduct.name) {
+              allFields[`relatedProduct_${index}`] = {
+                value: relatedProduct.name,
+                field_type: 'text',
+                editable: true,
+                description: `Related product #${index + 1} name`
+              }
+            }
+          })
+        }
+        
+        if (schemaData.isSimilarTo && Array.isArray(schemaData.isSimilarTo)) {
+          schemaData.isSimilarTo.forEach((similarProduct, index) => {
+            if (similarProduct.name) {
+              allFields[`similarProduct_${index}`] = {
+                value: similarProduct.name,
+                field_type: 'text',
+                editable: true,
+                description: `Similar product #${index + 1} name`
               }
             }
           })

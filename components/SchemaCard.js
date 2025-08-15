@@ -490,6 +490,121 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return previewFields.slice(0, 6)
       }
       
+      // Handle Product schema type
+      if (schemaData['@type'] === 'Product') {
+        if (schemaData.name) {
+          previewFields.push({
+            key: 'name',
+            label: 'Product Name',
+            value: schemaData.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.brand?.name) {
+          previewFields.push({
+            key: 'brand',
+            label: 'Brand',
+            value: schemaData.brand.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.category) {
+          previewFields.push({
+            key: 'category',
+            label: 'Product Category',
+            value: schemaData.category,
+            editable: true
+          })
+        }
+        
+        if (schemaData.productID || schemaData.sku || schemaData.mpn) {
+          const identifiers = [
+            schemaData.productID && `ID: ${schemaData.productID}`,
+            schemaData.sku && `SKU: ${schemaData.sku}`,
+            schemaData.mpn && `MPN: ${schemaData.mpn}`
+          ].filter(Boolean).join(' | ')
+          previewFields.push({
+            key: 'identifiers',
+            label: 'Product Identifiers',
+            value: identifiers,
+            editable: false
+          })
+        }
+        
+        if (schemaData.offers?.price) {
+          let priceDisplay = `${schemaData.offers.price} ${schemaData.offers.priceCurrency || 'GBP'}`
+          if (schemaData.offers.warranty?.durationOfWarranty?.value) {
+            priceDisplay += ` (${schemaData.offers.warranty.durationOfWarranty.value}mo warranty)`
+          }
+          if (schemaData.offers.deliveryLeadTime?.value) {
+            priceDisplay += ` • ${schemaData.offers.deliveryLeadTime.value} day delivery`
+          }
+          previewFields.push({
+            key: 'pricing',
+            label: 'Price & Delivery',
+            value: priceDisplay,
+            editable: false
+          })
+        }
+        
+        if (schemaData.aggregateRating?.ratingValue) {
+          previewFields.push({
+            key: 'rating',
+            label: 'Customer Rating',
+            value: `${schemaData.aggregateRating.ratingValue}/${schemaData.aggregateRating.bestRating || '5'} (${schemaData.aggregateRating.reviewCount || schemaData.aggregateRating.ratingCount || '0'} reviews)`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.manufacturer?.name) {
+          previewFields.push({
+            key: 'manufacturer',
+            label: 'Manufacturer',
+            value: schemaData.manufacturer.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.seller?.name) {
+          previewFields.push({
+            key: 'seller',
+            label: 'Sold By',
+            value: schemaData.seller.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
+          const deploymentModel = schemaData.additionalProperty.find(prop => prop.name === 'Deployment Model')
+          const userCapacity = schemaData.additionalProperty.find(prop => prop.name === 'User Capacity')
+          if (deploymentModel || userCapacity) {
+            const details = [
+              deploymentModel && `${deploymentModel.value} deployment`,
+              userCapacity && `${userCapacity.value} users`
+            ].filter(Boolean).join(' • ')
+            previewFields.push({
+              key: 'productDetails',
+              label: 'Product Details',
+              value: details,
+              editable: false
+            })
+          }
+        }
+        
+        if (schemaData.isRelatedTo && Array.isArray(schemaData.isRelatedTo)) {
+          previewFields.push({
+            key: 'relatedProducts',
+            label: 'Related Products',
+            value: `${schemaData.isRelatedTo.length} related products`,
+            editable: false
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
       // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
@@ -1419,305 +1534,179 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
           })
         }
         
-        // Area served
-        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
-          schemaData.areaServed.forEach((area, index) => {
-            const areaName = area.name || area
-            allFields.push({
-              key: `areaServed_${index}`,
-              label: `Area Served ${index + 1}`,
-              value: areaName,
-              editable: true,
-              fieldType: 'text',
-              description: `Geographic area #${index + 1} served by this location`
-            })
-          })
-        }
-        
-        // Local business features
-        if (schemaData.priceRange) {
-          allFields.push({
-            key: 'priceRange',
-            label: 'Price Range',
-            value: schemaData.priceRange,
-            editable: true,
-            fieldType: 'text',
-            description: 'Business price range indicator (e.g., $, $$, $$$)'
-          })
-        }
-        
-        if (schemaData.currenciesAccepted) {
-          allFields.push({
-            key: 'currenciesAccepted',
-            label: 'Currencies Accepted',
-            value: schemaData.currenciesAccepted,
-            editable: true,
-            fieldType: 'text',
-            description: 'Currencies accepted at this location'
-          })
-        }
-        
-        if (schemaData.paymentAccepted) {
-          allFields.push({
-            key: 'paymentAccepted',
-            label: 'Payment Methods',
-            value: schemaData.paymentAccepted,
-            editable: true,
-            fieldType: 'text',
-            description: 'Payment methods accepted'
-          })
-        }
-        
-        // Languages
-        if (schemaData.inLanguage && Array.isArray(schemaData.inLanguage)) {
-          allFields.push({
-            key: 'inLanguage',
-            label: 'Languages Spoken',
-            value: schemaData.inLanguage.join(', '),
-            editable: true,
-            fieldType: 'text',
-            description: 'Languages spoken at this location'
-          })
-        }
-        
-        // Parent organization
-        if (schemaData.parentOrganization?.name) {
-          allFields.push({
-            key: 'parentOrgName',
-            label: 'Parent Organization',
-            value: schemaData.parentOrganization.name,
-            editable: true,
-            fieldType: 'text',
-            description: 'Parent company or organization'
-          })
-        }
-        
-        if (schemaData.parentOrganization?.url) {
-          allFields.push({
-            key: 'parentOrgUrl',
-            label: 'Parent Organization URL',
-            value: schemaData.parentOrganization.url,
-            editable: true,
-            fieldType: 'url',
-            description: 'Parent organization website'
-          })
-        }
-        
-        // Local departments
-        if (schemaData.department && Array.isArray(schemaData.department)) {
-          schemaData.department.forEach((dept, index) => {
-            if (dept.name) {
-              allFields.push({
-                key: `department_${index}_name`,
-                label: `Local Department ${index + 1}`,
-                value: dept.name,
-                editable: true,
-                fieldType: 'text',
-                description: `Local department #${index + 1} name`
-              })
-            }
-            
-            if (dept.contactPoint?.telephone) {
-              allFields.push({
-                key: `department_${index}_phone`,
-                label: `Department ${index + 1} Phone`,
-                value: dept.contactPoint.telephone,
-                editable: true,
-                fieldType: 'tel',
-                description: `Local department #${index + 1} phone`
-              })
-            }
-            
-            if (dept.contactPoint?.email) {
-              allFields.push({
-                key: `department_${index}_email`,
-                label: `Department ${index + 1} Email`,
-                value: dept.contactPoint.email,
-                editable: true,
-                fieldType: 'email',
-                description: `Local department #${index + 1} email`
-              })
-            }
-            
-            if (dept.contactPoint?.contactType) {
-              allFields.push({
-                key: `department_${index}_type`,
-                label: `Department ${index + 1} Type`,
-                value: dept.contactPoint.contactType,
-                editable: true,
-                fieldType: 'text',
-                description: `Local department #${index + 1} contact type`
-              })
-            }
-          })
-        }
-        
         return allFields
       }
       
-      // Handle Service schema type
-      if (schemaData['@type'] === 'Service') {
+      // Handle Product schema type
+      if (schemaData['@type'] === 'Product') {
         if (schemaData.name) {
           allFields.push({
             key: 'name',
-            label: 'Service Name',
+            label: 'Product Name',
             value: schemaData.name,
             editable: true,
             fieldType: 'text',
-            description: 'Name of the service offered'
+            description: 'Name of the product'
           })
         }
         
-        if (schemaData.alternateName) {
+        if (schemaData.description) {
           allFields.push({
-            key: 'alternateName',
-            label: 'Alternate Name',
-            value: schemaData.alternateName,
-            editable: true,
-            fieldType: 'text',
-            description: 'Commonly known as or trading name'
-          })
-        }
-        
-        if (schemaData.serviceType) {
-          allFields.push({
-            key: 'serviceType',
-            label: 'Service Type',
-            value: schemaData.serviceType,
-            editable: true,
-            fieldType: 'text',
-            description: 'Category or type of service'
-          })
-        }
-        
-        // Handle category as both string and array
-        if (schemaData.category) {
-          const categoryValue = Array.isArray(schemaData.category) ? 
-            schemaData.category.join(', ') : 
-            schemaData.category
-          allFields.push({
-            key: 'category',
-            label: 'Service Categories',
-            value: categoryValue,
-            editable: true,
-            fieldType: 'text',
-            description: 'Service category classifications'
-          })
-        }
-        
-        // Provider organization
-        if (schemaData.provider?.name) {
-          allFields.push({
-            key: 'providerName',
-            label: 'Service Provider',
-            value: schemaData.provider.name,
-            editable: true,
-            fieldType: 'text',
-            description: 'Organization providing the service'
-          })
-        }
-        
-        if (schemaData.provider?.url) {
-          allFields.push({
-            key: 'providerUrl',
-            label: 'Provider Website',
-            value: schemaData.provider.url,
-            editable: true,
-            fieldType: 'url',
-            description: 'Service provider website URL'
-          })
-        }
-        
-        // Audience information
-        if (schemaData.audience) {
-          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
-          const audienceTypes = audiences.map(aud => aud.audienceType).filter(Boolean).join(', ')
-          allFields.push({
-            key: 'audience',
-            label: 'Target Audiences',
-            value: `${audiences.length} audience${audiences.length > 1 ? 's' : ''}: ${audienceTypes}`,
-            editable: true,
-            fieldType: 'text',
-            description: 'Primary audience for this service'
-          })
-        }
-        
-        // Area served
-        if (schemaData.areaServed && Array.isArray(schemaData.areaServed)) {
-          schemaData.areaServed.forEach((area, index) => {
-            const areaName = area.name || area
-            allFields.push({
-              key: `areaServed_${index}`,
-              label: `Area Served ${index + 1}`,
-              value: areaName,
-              editable: true,
-              fieldType: 'text',
-              description: `Geographic area #${index + 1} where service is available`
-            })
-          })
-        }
-        
-        // Service channels
-        if (schemaData.availableChannel && Array.isArray(schemaData.availableChannel)) {
-          schemaData.availableChannel.forEach((channel, index) => {
-            if (channel.serviceType) {
-              allFields.push({
-                key: `channel_${index}_type`,
-                label: `Service Channel ${index + 1}`,
-                value: channel.serviceType,
-                editable: true,
-                fieldType: 'text',
-                description: `Service delivery channel #${index + 1}`
-              })
-            }
-            
-            if (channel.availableLanguage && Array.isArray(channel.availableLanguage)) {
-              allFields.push({
-                key: `channel_${index}_languages`,
-                label: `Channel ${index + 1} Languages`,
-                value: channel.availableLanguage.join(', '),
-                editable: true,
-                fieldType: 'text',
-                description: `Languages available for channel #${index + 1}`
-              })
-            }
-          })
-        }
-        
-        // Service output/deliverables
-        if (schemaData.serviceOutput) {
-          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
-          const outputNames = outputs.map(output => output.name).filter(Boolean).join(', ')
-          allFields.push({
-            key: 'serviceOutput',
-            label: 'Deliverables',
-            value: `${outputs.length} output${outputs.length > 1 ? 's' : ''}: ${outputNames}`,
-            editable: true,
-            fieldType: 'text',
-            description: 'Main deliverable or output of the service'
-          })
-        }
-        
-        if (schemaData.serviceOutput?.description) {
-          allFields.push({
-            key: 'serviceOutputDescription',
-            label: 'Output Description',
-            value: schemaData.serviceOutput.description,
+            key: 'description',
+            label: 'Product Description',
+            value: schemaData.description,
             editable: true,
             fieldType: 'textarea',
-            description: 'Description of service deliverables'
+            description: 'Detailed product description'
           })
         }
         
-        // Offers and pricing
-        if (schemaData.offers?.priceRange) {
+        if (schemaData.category) {
           allFields.push({
-            key: 'offerPriceRange',
-            label: 'Price Range',
-            value: schemaData.offers.priceRange,
+            key: 'category',
+            label: 'Product Category',
+            value: schemaData.category,
             editable: true,
             fieldType: 'text',
-            description: 'Service pricing range'
+            description: 'Product category classification'
+          })
+        }
+        
+        // Product identifiers
+        if (schemaData.productID) {
+          allFields.push({
+            key: 'productID',
+            label: 'Product ID',
+            value: schemaData.productID,
+            editable: true,
+            fieldType: 'text',
+            description: 'Unique product identifier'
+          })
+        }
+        
+        if (schemaData.sku) {
+          allFields.push({
+            key: 'sku',
+            label: 'SKU',
+            value: schemaData.sku,
+            editable: true,
+            fieldType: 'text',
+            description: 'Stock keeping unit'
+          })
+        }
+        
+        if (schemaData.mpn) {
+          allFields.push({
+            key: 'mpn',
+            label: 'MPN',
+            value: schemaData.mpn,
+            editable: true,
+            fieldType: 'text',
+            description: 'Manufacturer part number'
+          })
+        }
+        
+        // Brand information
+        if (schemaData.brand?.name) {
+          allFields.push({
+            key: 'brandName',
+            label: 'Brand Name',
+            value: schemaData.brand.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Product brand name'
+          })
+        }
+        
+        if (schemaData.brand?.logo) {
+          allFields.push({
+            key: 'brandLogo',
+            label: 'Brand Logo',
+            value: schemaData.brand.logo,
+            editable: true,
+            fieldType: 'url',
+            description: 'Brand logo image URL'
+          })
+        }
+        
+        // Manufacturer information
+        if (schemaData.manufacturer?.name) {
+          allFields.push({
+            key: 'manufacturerName',
+            label: 'Manufacturer',
+            value: schemaData.manufacturer.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Product manufacturer name'
+          })
+        }
+        
+        if (schemaData.manufacturer?.url) {
+          allFields.push({
+            key: 'manufacturerUrl',
+            label: 'Manufacturer Website',
+            value: schemaData.manufacturer.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Manufacturer website URL'
+          })
+        }
+        
+        // Seller information
+        if (schemaData.seller?.name) {
+          allFields.push({
+            key: 'sellerName',
+            label: 'Seller',
+            value: schemaData.seller.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Product seller name'
+          })
+        }
+        
+        if (schemaData.seller?.url) {
+          allFields.push({
+            key: 'sellerUrl',
+            label: 'Seller Website',
+            value: schemaData.seller.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Seller website URL'
+          })
+        }
+        
+        // Product images
+        if (schemaData.image && Array.isArray(schemaData.image)) {
+          schemaData.image.forEach((imageUrl, index) => {
+            allFields.push({
+              key: `image_${index}`,
+              label: `Product Image ${index + 1}`,
+              value: imageUrl,
+              editable: true,
+              fieldType: 'url',
+              description: `Product image #${index + 1} URL`
+            })
+          })
+        } else if (schemaData.image) {
+          allFields.push({
+            key: 'image',
+            label: 'Product Image',
+            value: schemaData.image,
+            editable: true,
+            fieldType: 'url',
+            description: 'Product image URL'
+          })
+        }
+        
+        // Offers information
+        if (schemaData.offers?.price) {
+          allFields.push({
+            key: 'offerPrice',
+            label: 'Price',
+            value: schemaData.offers.price,
+            editable: true,
+            fieldType: 'text',
+            description: 'Product price'
           })
         }
         
@@ -1739,238 +1728,162 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
             value: schemaData.offers.availability,
             editable: true,
             fieldType: 'text',
-            description: 'Service availability status'
+            description: 'Product availability status'
           })
         }
         
-        if (schemaData.offers?.validFrom) {
+        if (schemaData.offers?.itemCondition) {
           allFields.push({
-            key: 'offerValidFrom',
-            label: 'Valid From',
-            value: schemaData.offers.validFrom,
-            editable: true,
-            fieldType: 'date',
-            description: 'Offer valid from date'
-          })
-        }
-        
-        if (schemaData.offers?.validThrough) {
-          allFields.push({
-            key: 'offerValidThrough',
-            label: 'Valid Until',
-            value: schemaData.offers.validThrough,
-            editable: true,
-            fieldType: 'date',
-            description: 'Offer valid until date'
-          })
-        }
-        
-        // Offer catalog
-        if (schemaData.hasOfferCatalog?.name) {
-          allFields.push({
-            key: 'offerCatalogName',
-            label: 'Service Catalog Name',
-            value: schemaData.hasOfferCatalog.name,
+            key: 'offerCondition',
+            label: 'Item Condition',
+            value: schemaData.offers.itemCondition,
             editable: true,
             fieldType: 'text',
-            description: 'Name of the service catalog'
+            description: 'Product condition'
           })
         }
         
-        if (schemaData.hasOfferCatalog?.itemListElement && Array.isArray(schemaData.hasOfferCatalog.itemListElement)) {
-          schemaData.hasOfferCatalog.itemListElement.forEach((item, index) => {
-            if (item.itemOffered?.name) {
-              allFields.push({
-                key: `catalog_${index}_name`,
-                label: `Catalog Service ${index + 1}`,
-                value: item.itemOffered.name,
-                editable: true,
-                fieldType: 'text',
-                description: `Service #${index + 1} in catalog`
-              })
-            }
-            
-            if (item.itemOffered?.description) {
-              allFields.push({
-                key: `catalog_${index}_description`,
-                label: `Service ${index + 1} Description`,
-                value: item.itemOffered.description,
-                editable: true,
-                fieldType: 'textarea',
-                description: `Description for catalog service #${index + 1}`
-              })
-            }
-          })
-        }
-        
-        // Terms of service
-        if (schemaData.termsOfService) {
+        if (schemaData.offers?.priceValidUntil) {
           allFields.push({
-            key: 'termsOfService',
-            label: 'Terms of Service URL',
-            value: schemaData.termsOfService,
+            key: 'priceValidUntil',
+            label: 'Price Valid Until',
+            value: schemaData.offers.priceValidUntil,
             editable: true,
-            fieldType: 'url',
-            description: 'Link to terms of service'
+            fieldType: 'date',
+            description: 'Price validity end date'
           })
         }
         
-        // Hours available
-        if (schemaData.hoursAvailable) {
-          if (schemaData.hoursAvailable.dayOfWeek && Array.isArray(schemaData.hoursAvailable.dayOfWeek)) {
-            allFields.push({
-              key: 'hoursAvailableDays',
-              label: 'Available Days',
-              value: schemaData.hoursAvailable.dayOfWeek.join(', '),
-              editable: true,
-              fieldType: 'text',
-              description: 'Days when service is available'
-            })
-          }
-          
-          if (schemaData.hoursAvailable.opens) {
-            allFields.push({
-              key: 'hoursOpens',
-              label: 'Service Opens',
-              value: schemaData.hoursAvailable.opens,
-              editable: true,
-              fieldType: 'time',
-              description: 'Time when service becomes available'
-            })
-          }
-          
-          if (schemaData.hoursAvailable.closes) {
-            allFields.push({
-              key: 'hoursCloses',
-              label: 'Service Closes',
-              value: schemaData.hoursAvailable.closes,
-              editable: true,
-              fieldType: 'time',
-              description: 'Time when service stops being available'
-            })
-          }
-        }
-        
-        // Handle multiple audiences with complex structures
-        if (schemaData.audience) {
-          const audiences = Array.isArray(schemaData.audience) ? schemaData.audience : [schemaData.audience]
-          
-          audiences.forEach((audience, index) => {
-            if (audience.audienceType) {
-              allFields.push({
-                key: `audience_${index}_type`,
-                label: `Target Audience ${index + 1}`,
-                value: audience.audienceType,
-                editable: true,
-                fieldType: 'text',
-                description: `Audience type #${index + 1}`
-              })
-            }
-            
-            if (audience.geographicArea?.name) {
-              allFields.push({
-                key: `audience_${index}_geography`,
-                label: `Audience ${index + 1} Geography`,
-                value: audience.geographicArea.name,
-                editable: true,
-                fieldType: 'text',
-                description: `Geographic focus for audience #${index + 1}`
-              })
-            }
-            
-            if (audience.numberOfEmployees?.minValue && audience.numberOfEmployees?.maxValue) {
-              allFields.push({
-                key: `audience_${index}_employees`,
-                label: `Audience ${index + 1} Employee Range`,
-                value: `${audience.numberOfEmployees.minValue}-${audience.numberOfEmployees.maxValue}`,
-                editable: true,
-                fieldType: 'text',
-                description: `Employee count range for audience #${index + 1}`
-              })
-            }
+        // Warranty information
+        if (schemaData.offers?.warranty?.durationOfWarranty?.value) {
+          allFields.push({
+            key: 'warrantyDuration',
+            label: 'Warranty Duration',
+            value: `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`,
+            editable: true,
+            fieldType: 'text',
+            description: 'Product warranty duration'
           })
         }
         
-        // Service areas (industries)
-        if (schemaData.serviceArea && Array.isArray(schemaData.serviceArea)) {
-          schemaData.serviceArea.forEach((area, index) => {
-            allFields.push({
-              key: `serviceArea_${index}`,
-              label: `Industry Sector ${index + 1}`,
-              value: area,
-              editable: true,
-              fieldType: 'text',
-              description: `Industry sector #${index + 1} served`
-            })
+        // Delivery information
+        if (schemaData.offers?.deliveryLeadTime?.value) {
+          allFields.push({
+            key: 'deliveryLeadTime',
+            label: 'Delivery Lead Time',
+            value: `${schemaData.offers.deliveryLeadTime.value} ${schemaData.offers.deliveryLeadTime.unitCode || 'days'}`,
+            editable: true,
+            fieldType: 'text',
+            description: 'Expected delivery time'
           })
         }
         
-        // Handle multiple service outputs
-        if (schemaData.serviceOutput) {
-          const outputs = Array.isArray(schemaData.serviceOutput) ? schemaData.serviceOutput : [schemaData.serviceOutput]
-          
-          outputs.forEach((output, index) => {
-            if (output.name) {
+        // Rating and reviews
+        if (schemaData.aggregateRating?.ratingValue) {
+          allFields.push({
+            key: 'ratingValue',
+            label: 'Average Rating',
+            value: schemaData.aggregateRating.ratingValue,
+            editable: true,
+            fieldType: 'text',
+            description: 'Average customer rating'
+          })
+        }
+        
+        if (schemaData.aggregateRating?.bestRating) {
+          allFields.push({
+            key: 'bestRating',
+            label: 'Best Rating',
+            value: schemaData.aggregateRating.bestRating,
+            editable: true,
+            fieldType: 'text',
+            description: 'Maximum possible rating'
+          })
+        }
+        
+        if (schemaData.aggregateRating?.worstRating) {
+          allFields.push({
+            key: 'worstRating',
+            label: 'Worst Rating',
+            value: schemaData.aggregateRating.worstRating,
+            editable: true,
+            fieldType: 'text',
+            description: 'Minimum possible rating'
+          })
+        }
+        
+        if (schemaData.aggregateRating?.ratingCount) {
+          allFields.push({
+            key: 'ratingCount',
+            label: 'Rating Count',
+            value: schemaData.aggregateRating.ratingCount,
+            editable: true,
+            fieldType: 'text',
+            description: 'Total number of ratings'
+          })
+        }
+        
+        if (schemaData.aggregateRating?.reviewCount) {
+          allFields.push({
+            key: 'reviewCount',
+            label: 'Review Count',
+            value: schemaData.aggregateRating.reviewCount,
+            editable: true,
+            fieldType: 'text',
+            description: 'Total number of reviews'
+          })
+        }
+        
+        // Customer reviews
+        if (schemaData.review && Array.isArray(schemaData.review)) {
+          schemaData.review.forEach((review, index) => {
+            if (review.author?.name) {
               allFields.push({
-                key: `serviceOutput_${index}_name`,
-                label: `Service Output ${index + 1}`,
-                value: output.name,
+                key: `review_${index}_author`,
+                label: `Review ${index + 1} Author`,
+                value: review.author.name,
                 editable: true,
                 fieldType: 'text',
-                description: `Service deliverable #${index + 1} name`
+                description: `Customer review #${index + 1} author`
               })
             }
             
-            if (output.description) {
+            if (review.reviewRating?.ratingValue) {
               allFields.push({
-                key: `serviceOutput_${index}_description`,
-                label: `Output ${index + 1} Description`,
-                value: output.description,
+                key: `review_${index}_rating`,
+                label: `Review ${index + 1} Rating`,
+                value: review.reviewRating.ratingValue,
+                editable: true,
+                fieldType: 'text',
+                description: `Customer review #${index + 1} rating`
+              })
+            }
+            
+            if (review.reviewBody) {
+              allFields.push({
+                key: `review_${index}_body`,
+                label: `Review ${index + 1} Text`,
+                value: review.reviewBody,
                 editable: true,
                 fieldType: 'textarea',
-                description: `Description for deliverable #${index + 1}`
+                description: `Customer review #${index + 1} content`
               })
             }
             
-            if (output['@type']) {
+            if (review.datePublished) {
               allFields.push({
-                key: `serviceOutput_${index}_type`,
-                label: `Output ${index + 1} Type`,
-                value: output['@type'],
+                key: `review_${index}_date`,
+                label: `Review ${index + 1} Date`,
+                value: review.datePublished,
                 editable: true,
-                fieldType: 'text',
-                description: `Schema type for deliverable #${index + 1}`
+                fieldType: 'date',
+                description: `Customer review #${index + 1} publication date`
               })
             }
           })
         }
         
-        // Enhanced offers with warranty
-        if (schemaData.offers?.warranty) {
-          if (schemaData.offers.warranty.durationOfWarranty?.value) {
-            allFields.push({
-              key: 'warrantyDuration',
-              label: 'Warranty Duration',
-              value: `${schemaData.offers.warranty.durationOfWarranty.value} ${schemaData.offers.warranty.durationOfWarranty.unitCode || 'months'}`,
-              editable: true,
-              fieldType: 'text',
-              description: 'Warranty period duration'
-            })
-          }
-          
-          if (schemaData.offers.warranty.warrantyScope) {
-            allFields.push({
-              key: 'warrantyScope',
-              label: 'Warranty Coverage',
-              value: schemaData.offers.warranty.warrantyScope,
-              editable: true,
-              fieldType: 'textarea',
-              description: 'What the warranty covers'
-            })
-          }
-        }
-        
-        // Additional service properties
+        // Additional properties
         if (schemaData.additionalProperty && Array.isArray(schemaData.additionalProperty)) {
           schemaData.additionalProperty.forEach((property, index) => {
             if (property.name && property.value) {
@@ -1980,21 +1893,40 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
                 value: property.value,
                 editable: true,
                 fieldType: 'text',
-                description: `Additional service property: ${property.name}`
+                description: `Additional product property: ${property.name}`
               })
             }
           })
         }
         
-        // Subscription requirement
-        if (typeof schemaData.requiresSubscription === 'boolean') {
-          allFields.push({
-            key: 'requiresSubscription',
-            label: 'Requires Subscription',
-            value: schemaData.requiresSubscription ? 'Yes' : 'No',
-            editable: true,
-            fieldType: 'text',
-            description: 'Whether service requires ongoing subscription'
+        // Product relationships
+        if (schemaData.isRelatedTo && Array.isArray(schemaData.isRelatedTo)) {
+          schemaData.isRelatedTo.forEach((relatedProduct, index) => {
+            if (relatedProduct.name) {
+              allFields.push({
+                key: `relatedProduct_${index}`,
+                label: `Related Product ${index + 1}`,
+                value: relatedProduct.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Related product #${index + 1} name`
+              })
+            }
+          })
+        }
+        
+        if (schemaData.isSimilarTo && Array.isArray(schemaData.isSimilarTo)) {
+          schemaData.isSimilarTo.forEach((similarProduct, index) => {
+            if (similarProduct.name) {
+              allFields.push({
+                key: `similarProduct_${index}`,
+                label: `Similar Product ${index + 1}`,
+                value: similarProduct.name,
+                editable: true,
+                fieldType: 'text',
+                description: `Similar product #${index + 1} name`
+              })
+            }
           })
         }
         
