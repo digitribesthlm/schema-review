@@ -159,6 +159,76 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
         return previewFields.slice(0, 6)
       }
       
+      // Handle Organization schema type
+      if (schemaData['@type'] === 'Organization') {
+        if (schemaData.name) {
+          previewFields.push({
+            key: 'name',
+            label: 'Organization Name',
+            value: schemaData.name,
+            editable: true
+          })
+        }
+        
+        if (schemaData.alternateName) {
+          previewFields.push({
+            key: 'alternateName',
+            label: 'Alternate Name',
+            value: schemaData.alternateName,
+            editable: true
+          })
+        }
+        
+        if (schemaData.description) {
+          previewFields.push({
+            key: 'description',
+            label: 'Description',
+            value: schemaData.description.length > 100 ? 
+              schemaData.description.substring(0, 100) + '...' : 
+              schemaData.description,
+            editable: true
+          })
+        }
+        
+        if (schemaData.foundingDate) {
+          previewFields.push({
+            key: 'foundingDate',
+            label: 'Founded',
+            value: schemaData.foundingDate,
+            editable: true
+          })
+        }
+        
+        if (schemaData.address?.addressLocality) {
+          previewFields.push({
+            key: 'location',
+            label: 'Location',
+            value: `${schemaData.address.addressLocality}, ${schemaData.address.addressCountry || ''}`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.contactPoint && Array.isArray(schemaData.contactPoint)) {
+          previewFields.push({
+            key: 'contactPoints',
+            label: 'Contact Points',
+            value: `${schemaData.contactPoint.length} contact methods`,
+            editable: false
+          })
+        }
+        
+        if (schemaData.sameAs && Array.isArray(schemaData.sameAs)) {
+          previewFields.push({
+            key: 'socialMedia',
+            label: 'Social Media',
+            value: `${schemaData.sameAs.length} social profiles`,
+            editable: false
+          })
+        }
+        
+        return previewFields.slice(0, 6)
+      }
+      
       // Handle other schema types (Service, Product, etc.)
       if (schemaData.name) {
         previewFields.push({
@@ -463,6 +533,192 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
                 description: `Speaker #${index + 1} name and organization`
               })
             }
+          })
+        }
+        
+        return allFields
+      }
+      
+      // Handle Organization schema type
+      if (schemaData['@type'] === 'Organization') {
+        if (schemaData.name) {
+          allFields.push({
+            key: 'name',
+            label: 'Organization Name',
+            value: schemaData.name,
+            editable: true,
+            fieldType: 'text',
+            description: 'Official organization name'
+          })
+        }
+        
+        if (schemaData.alternateName) {
+          allFields.push({
+            key: 'alternateName',
+            label: 'Alternate Name',
+            value: schemaData.alternateName,
+            editable: true,
+            fieldType: 'text',
+            description: 'Commonly known as or trading name'
+          })
+        }
+        
+        if (schemaData.url) {
+          allFields.push({
+            key: 'url',
+            label: 'Website URL',
+            value: schemaData.url,
+            editable: true,
+            fieldType: 'url',
+            description: 'Official organization website'
+          })
+        }
+        
+        if (schemaData.logo) {
+          allFields.push({
+            key: 'logo',
+            label: 'Logo URL',
+            value: schemaData.logo,
+            editable: true,
+            fieldType: 'url',
+            description: 'Organization logo image URL'
+          })
+        }
+        
+        if (schemaData.description) {
+          allFields.push({
+            key: 'description',
+            label: 'Description',
+            value: schemaData.description,
+            editable: true,
+            fieldType: 'textarea',
+            description: 'Organization description and services'
+          })
+        }
+        
+        if (schemaData.foundingDate) {
+          allFields.push({
+            key: 'foundingDate',
+            label: 'Founding Date',
+            value: schemaData.foundingDate,
+            editable: true,
+            fieldType: 'text',
+            description: 'Year or date organization was founded'
+          })
+        }
+        
+        if (schemaData.numberOfEmployees) {
+          allFields.push({
+            key: 'numberOfEmployees',
+            label: 'Number of Employees',
+            value: schemaData.numberOfEmployees,
+            editable: true,
+            fieldType: 'text',
+            description: 'Employee count or range'
+          })
+        }
+        
+        // Address details
+        if (schemaData.address?.streetAddress) {
+          allFields.push({
+            key: 'addressStreet',
+            label: 'Street Address',
+            value: schemaData.address.streetAddress,
+            editable: true,
+            fieldType: 'text',
+            description: 'Street address or business park'
+          })
+        }
+        
+        if (schemaData.address?.addressLocality) {
+          allFields.push({
+            key: 'addressCity',
+            label: 'City/Locality',
+            value: schemaData.address.addressLocality,
+            editable: true,
+            fieldType: 'text',
+            description: 'City, town, or locality'
+          })
+        }
+        
+        if (schemaData.address?.postalCode) {
+          allFields.push({
+            key: 'addressPostalCode',
+            label: 'Postal Code',
+            value: schemaData.address.postalCode,
+            editable: true,
+            fieldType: 'text',
+            description: 'ZIP or postal code'
+          })
+        }
+        
+        if (schemaData.address?.addressCountry) {
+          allFields.push({
+            key: 'addressCountry',
+            label: 'Country',
+            value: schemaData.address.addressCountry,
+            editable: true,
+            fieldType: 'text',
+            description: 'Country code or name'
+          })
+        }
+        
+        // Contact points
+        if (schemaData.contactPoint && Array.isArray(schemaData.contactPoint)) {
+          schemaData.contactPoint.forEach((contact, index) => {
+            if (contact.telephone) {
+              allFields.push({
+                key: `contact_${index}_phone`,
+                label: `${contact.contactType || 'Contact'} Phone`,
+                value: contact.telephone,
+                editable: true,
+                fieldType: 'tel',
+                description: `${contact.contactType || 'Contact'} telephone number`
+              })
+            }
+            
+            if (contact.email) {
+              allFields.push({
+                key: `contact_${index}_email`,
+                label: `${contact.contactType || 'Contact'} Email`,
+                value: contact.email,
+                editable: true,
+                fieldType: 'email',
+                description: `${contact.contactType || 'Contact'} email address`
+              })
+            }
+            
+            if (contact.hoursAvailable?.opens && contact.hoursAvailable?.closes) {
+              allFields.push({
+                key: `contact_${index}_hours`,
+                label: `${contact.contactType || 'Contact'} Hours`,
+                value: `${contact.hoursAvailable.opens} - ${contact.hoursAvailable.closes}`,
+                editable: true,
+                fieldType: 'text',
+                description: `${contact.contactType || 'Contact'} operating hours`
+              })
+            }
+          })
+        }
+        
+        // Social media links
+        if (schemaData.sameAs && Array.isArray(schemaData.sameAs)) {
+          schemaData.sameAs.forEach((socialUrl, index) => {
+            // Extract platform name from URL
+            let platformName = 'Social Media'
+            if (socialUrl.includes('linkedin')) platformName = 'LinkedIn'
+            else if (socialUrl.includes('twitter')) platformName = 'Twitter'
+            else if (socialUrl.includes('youtube')) platformName = 'YouTube'
+            else if (socialUrl.includes('facebook')) platformName = 'Facebook'
+            
+            allFields.push({
+              key: `social_${index}`,
+              label: `${platformName} Profile`,
+              value: socialUrl,
+              editable: true,
+              fieldType: 'url',
+              description: `${platformName} profile URL`
+            })
           })
         }
         

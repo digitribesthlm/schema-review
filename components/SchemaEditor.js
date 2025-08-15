@@ -154,6 +154,40 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
           })
         }
       }
+      // Handle Organization schema type
+      else if (schemaData['@type'] === 'Organization') {
+        if (schemaData.name) initialFields.name = schemaData.name
+        if (schemaData.alternateName) initialFields.alternateName = schemaData.alternateName
+        if (schemaData.url) initialFields.url = schemaData.url
+        if (schemaData.logo) initialFields.logo = schemaData.logo
+        if (schemaData.description) initialFields.description = schemaData.description
+        if (schemaData.foundingDate) initialFields.foundingDate = schemaData.foundingDate
+        if (schemaData.numberOfEmployees) initialFields.numberOfEmployees = schemaData.numberOfEmployees
+        
+        // Address details
+        if (schemaData.address?.streetAddress) initialFields.addressStreet = schemaData.address.streetAddress
+        if (schemaData.address?.addressLocality) initialFields.addressCity = schemaData.address.addressLocality
+        if (schemaData.address?.postalCode) initialFields.addressPostalCode = schemaData.address.postalCode
+        if (schemaData.address?.addressCountry) initialFields.addressCountry = schemaData.address.addressCountry
+        
+        // Contact points
+        if (schemaData.contactPoint && Array.isArray(schemaData.contactPoint)) {
+          schemaData.contactPoint.forEach((contact, index) => {
+            if (contact.telephone) initialFields[`contact_${index}_phone`] = contact.telephone
+            if (contact.email) initialFields[`contact_${index}_email`] = contact.email
+            if (contact.hoursAvailable?.opens && contact.hoursAvailable?.closes) {
+              initialFields[`contact_${index}_hours`] = `${contact.hoursAvailable.opens} - ${contact.hoursAvailable.closes}`
+            }
+          })
+        }
+        
+        // Social media links
+        if (schemaData.sameAs && Array.isArray(schemaData.sameAs)) {
+          schemaData.sameAs.forEach((socialUrl, index) => {
+            initialFields[`social_${index}`] = socialUrl
+          })
+        }
+      }
       // Handle other schema types
       else {
         if (schemaData.name) initialFields.name = schemaData.name
@@ -412,6 +446,152 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
                 editable: true,
                 description: `Speaker #${index + 1} profile URL`
               }
+            }
+          })
+        }
+      }
+      // Handle Organization schema type
+      else if (schemaData['@type'] === 'Organization') {
+        if (schemaData.name) {
+          allFields.name = {
+            value: schemaData.name,
+            field_type: 'text',
+            editable: true,
+            description: 'Organization name'
+          }
+        }
+        
+        if (schemaData.alternateName) {
+          allFields.alternateName = {
+            value: schemaData.alternateName,
+            field_type: 'text',
+            editable: true,
+            description: 'Alternate name or trading name'
+          }
+        }
+        
+        if (schemaData.url) {
+          allFields.url = {
+            value: schemaData.url,
+            field_type: 'url',
+            editable: true,
+            description: 'Organization website'
+          }
+        }
+        
+        if (schemaData.logo) {
+          allFields.logo = {
+            value: schemaData.logo,
+            field_type: 'url',
+            editable: true,
+            description: 'Organization logo URL'
+          }
+        }
+        
+        if (schemaData.description) {
+          allFields.description = {
+            value: schemaData.description,
+            field_type: 'textarea',
+            editable: true,
+            description: 'Organization description'
+          }
+        }
+        
+        if (schemaData.foundingDate) {
+          allFields.foundingDate = {
+            value: schemaData.foundingDate,
+            field_type: 'text',
+            editable: true,
+            description: 'Founding date or year'
+          }
+        }
+        
+        if (schemaData.numberOfEmployees) {
+          allFields.numberOfEmployees = {
+            value: schemaData.numberOfEmployees,
+            field_type: 'text',
+            editable: true,
+            description: 'Number of employees'
+          }
+        }
+        
+        // Address details
+        if (schemaData.address?.streetAddress) {
+          allFields.addressStreet = {
+            value: schemaData.address.streetAddress,
+            field_type: 'text',
+            editable: true,
+            description: 'Street address'
+          }
+        }
+        
+        if (schemaData.address?.addressLocality) {
+          allFields.addressCity = {
+            value: schemaData.address.addressLocality,
+            field_type: 'text',
+            editable: true,
+            description: 'City or locality'
+          }
+        }
+        
+        if (schemaData.address?.postalCode) {
+          allFields.addressPostalCode = {
+            value: schemaData.address.postalCode,
+            field_type: 'text',
+            editable: true,
+            description: 'Postal code'
+          }
+        }
+        
+        if (schemaData.address?.addressCountry) {
+          allFields.addressCountry = {
+            value: schemaData.address.addressCountry,
+            field_type: 'text',
+            editable: true,
+            description: 'Country'
+          }
+        }
+        
+        // Contact points
+        if (schemaData.contactPoint && Array.isArray(schemaData.contactPoint)) {
+          schemaData.contactPoint.forEach((contact, index) => {
+            if (contact.telephone) {
+              allFields[`contact_${index}_phone`] = {
+                value: contact.telephone,
+                field_type: 'tel',
+                editable: true,
+                description: `${contact.contactType || 'Contact'} phone number`
+              }
+            }
+            
+            if (contact.email) {
+              allFields[`contact_${index}_email`] = {
+                value: contact.email,
+                field_type: 'email',
+                editable: true,
+                description: `${contact.contactType || 'Contact'} email`
+              }
+            }
+            
+            if (contact.hoursAvailable?.opens && contact.hoursAvailable?.closes) {
+              allFields[`contact_${index}_hours`] = {
+                value: `${contact.hoursAvailable.opens} - ${contact.hoursAvailable.closes}`,
+                field_type: 'text',
+                editable: true,
+                description: `${contact.contactType || 'Contact'} hours`
+              }
+            }
+          })
+        }
+        
+        // Social media links
+        if (schemaData.sameAs && Array.isArray(schemaData.sameAs)) {
+          schemaData.sameAs.forEach((socialUrl, index) => {
+            allFields[`social_${index}`] = {
+              value: socialUrl,
+              field_type: 'url',
+              editable: true,
+              description: `Social media profile #${index + 1}`
             }
           })
         }
