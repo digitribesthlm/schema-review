@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import Cookies from 'js-cookie'
 import SchemaCard from '../../components/SchemaCard'
 import SchemaEditor from '../../components/SchemaEditor'
+import CreateSchemaModal from '../../components/CreateSchemaModal'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [recordsPerPage] = useState(10) // Can make this adjustable later
+  const [showCreateSchemaModal, setShowCreateSchemaModal] = useState(false)
 
   useEffect(() => {
     checkAuth()
@@ -309,6 +311,15 @@ export default function Dashboard() {
               </div>
 
               <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowCreateSchemaModal(true)}
+                  className="btn-primary flex items-center space-x-2"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Create Schema</span>
+                </button>
                 <span className="text-sm text-hubspot-gray">
                   Welcome, <span className="font-medium text-hubspot-dark">{user?.name}</span>
                 </span>
@@ -441,6 +452,18 @@ export default function Dashboard() {
           <PaginationControls />
         </div>
       </div>
+
+      {/* Create Schema Modal */}
+      {showCreateSchemaModal && (
+        <CreateSchemaModal
+          onClose={() => setShowCreateSchemaModal(false)}
+          clientId={clientId}
+          onSuccess={() => {
+            setShowCreateSchemaModal(false)
+            fetchSchemas() // Refresh schemas after creation
+          }}
+        />
+      )}
 
       {/* Schema Editor Modal */}
       {selectedSchema && (
