@@ -18,29 +18,7 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
         initialFields[key] = typeof field === 'object' && field !== null ? field.value : field
       })
     } else if (schema.schema_data) {
-      // Handle both direct @type and @graph structure
-      let schemaType = schema.schema_data['@type']
-      
-      // Check if it's a @graph structure (like Article schemas)
-      if (!schemaType && schema.schema_data['@graph'] && Array.isArray(schema.schema_data['@graph'])) {
-        const mainEntity = schema.schema_data['@graph'].find(item => 
-          item['@type'] === 'Article' || 
-          item['@type'] === 'Product' || 
-          item['@type'] === 'Organization' ||
-          item['@type'] === 'Service' ||
-          item['@type'] === 'Event' ||
-          item['@type'] === 'FAQPage'
-        )
-        if (mainEntity) {
-          schemaType = mainEntity['@type']
-        }
-      }
-      
-      // Use schema_type from the database as fallback
-      if (!schemaType) {
-        schemaType = schema.schema_type
-      }
-      
+      const schemaType = schema.schema_data['@type']
       const handler = getSchemaHandler(schemaType)
       const handlerFields = handler.getInitialFields(schema.schema_data)
       Object.assign(initialFields, handlerFields)
@@ -69,49 +47,13 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
     }
   }
 
-  const handleSave = async () => {
-    setLoading(true)
-    try {
-      // Save changes but keep current approval status
-      await onSave(editedFields, feedback, schema.approval_status || 'pending')
-      toast.success('Changes saved successfully!')
-      onClose()
-    } catch (error) {
-      toast.error('Failed to save changes')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const getAllEditableFields = () => {
     // Start with existing editable_fields or empty object
     const allFields = { ...(schema.editable_fields || {}) }
     
     // If no editable_fields exist, create them from schema_data
     if (!schema.editable_fields && schema.schema_data) {
-      // Handle both direct @type and @graph structure
-      let schemaType = schema.schema_data['@type']
-      
-      // Check if it's a @graph structure (like Article schemas)
-      if (!schemaType && schema.schema_data['@graph'] && Array.isArray(schema.schema_data['@graph'])) {
-        const mainEntity = schema.schema_data['@graph'].find(item => 
-          item['@type'] === 'Article' || 
-          item['@type'] === 'Product' || 
-          item['@type'] === 'Organization' ||
-          item['@type'] === 'Service' ||
-          item['@type'] === 'Event' ||
-          item['@type'] === 'FAQPage'
-        )
-        if (mainEntity) {
-          schemaType = mainEntity['@type']
-        }
-      }
-      
-      // Use schema_type from the database as fallback
-      if (!schemaType) {
-        schemaType = schema.schema_type
-      }
-      
+      const schemaType = schema.schema_data['@type']
       const handler = getSchemaHandler(schemaType)
       const handlerFields = handler.getFields(schema.schema_data, schema)
       Object.assign(allFields, handlerFields)
@@ -313,17 +255,6 @@ export default function SchemaEditor({ schema, onSave, onClose }) {
             >
               Cancel
             </button>
-            
-            {/* Save Changes Button - Only show when there are changes */}
-            {hasChanges() && (
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition-colors"
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : '💾 Save Changes'}
-              </button>
-            )}
             
             {/* Status Change Buttons - Always Available */}
             <button
