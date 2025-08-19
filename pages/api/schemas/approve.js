@@ -156,39 +156,128 @@ export default async function handler(req, res) {
               break
             // Organization schema specific fields - Contact (single contact point)
             case 'telephone':
-              if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].contactPoint && !Array.isArray(updatedSchemaData['@graph'][orgIndex].contactPoint)) {
+                  updatedSchemaData['@graph'][orgIndex].contactPoint.telephone = value
+                }
+              } else if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
                 updatedSchemaData.contactPoint.telephone = value
               }
               break
             case 'email':
-              if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].contactPoint && !Array.isArray(updatedSchemaData['@graph'][orgIndex].contactPoint)) {
+                  updatedSchemaData['@graph'][orgIndex].contactPoint.email = value
+                }
+              } else if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
                 updatedSchemaData.contactPoint.email = value
               }
               break
             case 'contactType':
-              if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].contactPoint && !Array.isArray(updatedSchemaData['@graph'][orgIndex].contactPoint)) {
+                  updatedSchemaData['@graph'][orgIndex].contactPoint.contactType = value
+                }
+              } else if (updatedSchemaData.contactPoint && !Array.isArray(updatedSchemaData.contactPoint)) {
                 updatedSchemaData.contactPoint.contactType = value
               }
               break
             // Organization additional fields
             case 'logo':
-              if (updatedSchemaData.logo !== undefined) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].logo !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].logo = value
+                }
+              } else if (updatedSchemaData.logo !== undefined) {
                 updatedSchemaData.logo = value
               }
               break
             case 'foundingDate':
-              if (updatedSchemaData.foundingDate !== undefined) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].foundingDate !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].foundingDate = value
+                }
+              } else if (updatedSchemaData.foundingDate !== undefined) {
                 updatedSchemaData.foundingDate = value
               }
               break
             case 'numberOfEmployees':
-              if (updatedSchemaData.numberOfEmployees !== undefined) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].numberOfEmployees !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].numberOfEmployees = parseInt(value) || value
+                }
+              } else if (updatedSchemaData.numberOfEmployees !== undefined) {
                 updatedSchemaData.numberOfEmployees = parseInt(value) || value
               }
               break
             case 'sameAs':
-              if (updatedSchemaData.sameAs !== undefined) {
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].sameAs !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].sameAs = Array.isArray(value) ? value : value.split(',').map(url => url.trim()).filter(Boolean)
+                }
+              } else if (updatedSchemaData.sameAs !== undefined) {
                 updatedSchemaData.sameAs = Array.isArray(value) ? value : value.split(',').map(url => url.trim()).filter(Boolean)
+              }
+              break
+            // Organization contact point additional fields
+            case 'availableLanguage':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].contactPoint?.availableLanguage !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].contactPoint.availableLanguage = value
+                }
+              } else if (updatedSchemaData.contactPoint?.availableLanguage !== undefined) {
+                updatedSchemaData.contactPoint.availableLanguage = value
+              }
+              break
+            case 'areaServed':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const orgIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'Organization')
+                if (orgIndex !== -1 && updatedSchemaData['@graph'][orgIndex].contactPoint?.areaServed !== undefined) {
+                  updatedSchemaData['@graph'][orgIndex].contactPoint.areaServed = value
+                }
+              } else if (updatedSchemaData.contactPoint?.areaServed !== undefined) {
+                updatedSchemaData.contactPoint.areaServed = value
+              }
+              break
+            // WebPage fields (in @graph)
+            case 'webPageName':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const webPageIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'WebPage')
+                if (webPageIndex !== -1 && updatedSchemaData['@graph'][webPageIndex].name !== undefined) {
+                  updatedSchemaData['@graph'][webPageIndex].name = value
+                }
+              }
+              break
+            case 'webPageDescription':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const webPageIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'WebPage')
+                if (webPageIndex !== -1 && updatedSchemaData['@graph'][webPageIndex].description !== undefined) {
+                  updatedSchemaData['@graph'][webPageIndex].description = value
+                }
+              }
+              break
+            case 'webPageUrl':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const webPageIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'WebPage')
+                if (webPageIndex !== -1 && updatedSchemaData['@graph'][webPageIndex].url !== undefined) {
+                  updatedSchemaData['@graph'][webPageIndex].url = value
+                }
+              }
+              break
+            case 'mainEntityOfPage':
+              if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                const webPageIndex = updatedSchemaData['@graph'].findIndex(item => item['@type'] === 'WebPage')
+                if (webPageIndex !== -1 && updatedSchemaData['@graph'][webPageIndex].mainEntityOfPage !== undefined) {
+                  updatedSchemaData['@graph'][webPageIndex].mainEntityOfPage = value
+                }
               }
               break
             // Product schema specific fields
@@ -519,6 +608,44 @@ export default async function handler(req, res) {
                 // Check if it's Service provider contactPoint array
                 else if (updatedSchemaData.provider?.contactPoint && updatedSchemaData.provider.contactPoint[contactIndex]) {
                   updatedSchemaData.provider.contactPoint[contactIndex].contactType = value
+                }
+              } else if (fieldName.startsWith('person_')) {
+                // Handle Person entity fields (person_0_name, person_1_email, etc.)
+                const parts = fieldName.split('_')
+                const personIndex = parseInt(parts[1])
+                const fieldType = parts[2]
+                
+                if (updatedSchemaData['@graph'] && Array.isArray(updatedSchemaData['@graph'])) {
+                  const personEntities = updatedSchemaData['@graph'].filter(item => item['@type'] === 'Person')
+                  if (personEntities[personIndex]) {
+                    switch (fieldType) {
+                      case 'name':
+                        if (personEntities[personIndex].name !== undefined) {
+                          personEntities[personIndex].name = value
+                        }
+                        break
+                      case 'jobTitle':
+                        if (personEntities[personIndex].jobTitle !== undefined) {
+                          personEntities[personIndex].jobTitle = value
+                        }
+                        break
+                      case 'email':
+                        if (personEntities[personIndex].email !== undefined) {
+                          personEntities[personIndex].email = value
+                        }
+                        break
+                      case 'telephone':
+                        if (personEntities[personIndex].telephone !== undefined) {
+                          personEntities[personIndex].telephone = value
+                        }
+                        break
+                      case 'sameAs':
+                        if (personEntities[personIndex].sameAs !== undefined) {
+                          personEntities[personIndex].sameAs = value
+                        }
+                        break
+                    }
+                  }
                 }
               } else {
                 // For other fields, try to find and update them in the schema
