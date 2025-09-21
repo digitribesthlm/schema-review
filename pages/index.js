@@ -43,11 +43,7 @@ export default function Dashboard() {
         return;
       }
       
-      const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
       const data = await response.json();
       
       console.log('Dashboard API Response:', data);
