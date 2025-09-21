@@ -29,12 +29,12 @@ export default async function handler(req, res) {
       { $count: "total" }
     ]
     
-    const totalResult = await db.collection('schema_pages').aggregate(totalCountPipeline).toArray()
+    const totalResult = await db.collection('schema_definitions').aggregate(totalCountPipeline).toArray()
     const totalPages = totalResult[0]?.total || 0
 
-    // Start from schema_pages to get pages with pagination, then left join with schemas and approvals
+    // Start from schema_definitions as the main collection
     const pipeline = [
-      // Start with all pages for this client - handle both ObjectId and string client_ids
+      // Start with all schema definitions for this client - handle both ObjectId and string client_ids
       { 
         $match: { 
           $or: [
@@ -51,89 +51,23 @@ export default async function handler(req, res) {
       { $skip: skip },
       { $limit: limitNum },
       
-      // Left join with schema_definitions to get schemas (if any) - JOIN BY URL
+      // Left join with schema_pages to get page analysis info (if any) - JOIN BY URL
       {
         $lookup: {
-          from: 'schema_definitions',
+          from: 'schema_pages',
           localField: 'url',
           foreignField: 'url',
-          as: 'schemas'
+          as: 'page_analysis'
         }
       },
       
-      // For each schema, get its approval info
-      {
-        $addFields: {
-          schemas: {
-            $map: {
-              input: '$schemas',
-              as: 'schema',
-              in: {
-                $mergeObjects: [
-                  '$$schema',
-                  {
-                    approval_info: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: { $ifNull: [[], []] }, // Will be populated in next stage
-                            cond: { $eq: ['$$this.schema_id', '$$schema._id'] }
-                          }
-                        },
-                        0
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      },
-      
-      // Get approval information for all schemas
+      // Get approval information for this schema
       {
         $lookup: {
           from: 'schema_approvals',
-          let: { schema_ids: '$schemas._id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $in: ['$schema_id', '$$schema_ids'] }
-              }
-            }
-          ],
-          as: 'all_approvals'
-        }
-      },
-      
-      // Merge approval info with schemas
-      {
-        $addFields: {
-          schemas: {
-            $map: {
-              input: '$schemas',
-              as: 'schema',
-              in: {
-                $mergeObjects: [
-                  '$$schema',
-                  {
-                    approval_info: {
-                      $arrayElemAt: [
-                        {
-                          $filter: {
-                            input: '$all_approvals',
-                            cond: { $eq: ['$$this.schema_id', '$$schema._id'] }
-                          }
-                        },
-                        0
-                      ]
-                    }
-                  }
-                ]
-              }
-            }
-          }
+          localField: '_id',
+          foreignField: 'schema_id',
+          as: 'approval_info'
         }
       },
       
@@ -141,36 +75,30 @@ export default async function handler(req, res) {
       {
         $project: {
           _id: '$url', // Use URL as the ID for grouping
-          page_title: 1,
-          page_type: 1,
-          content_summary: 1,
-          last_crawled: 1,
+          page_title: { $ifNull: [{ $arrayElemAt: ['$page_analysis.page_title', 0] }, '$url'] },
+          page_type: { $ifNull: [{ $arrayElemAt: ['$page_analysis.page_type', 0] }, 'unknown'] },
+          content_summary: { $arrayElemAt: ['$page_analysis.content_summary', 0] },
+          last_crawled: { $arrayElemAt: ['$page_analysis.last_crawled', 0] },
           url: 1,
-          schemas: {
-            $map: {
-              input: '$schemas',
-              as: 'schema',
-              in: {
-                schema_id: '$$schema._id',
-                schema_type: '$$schema.schema_type',
-                schema_priority: '$$schema.schema_priority',
-                schema_data: '$$schema.schema_data',
-                editable_fields: '$$schema.editable_fields',
-                approval_status: { 
-                  $ifNull: ['$$schema.approval_info.approval_status', 'pending'] 
-                },
-                approval_id: '$$schema.approval_info._id',
-                feedback: '$$schema.approval_info.feedback',
-                updated_at: '$$schema.updated_at',
-                version: { $ifNull: ['$$schema.version', 1] }
-              }
-            }
-          }
+          schemas: [{
+            schema_id: '$_id',
+            schema_type: '$schema_type',
+            schema_priority: '$schema_priority',
+            schema_data: '$schema_data',
+            editable_fields: '$editable_fields',
+            approval_status: { 
+              $ifNull: [{ $arrayElemAt: ['$approval_info.approval_status', 0] }, 'pending'] 
+            },
+            approval_id: { $arrayElemAt: ['$approval_info._id', 0] },
+            feedback: { $arrayElemAt: ['$approval_info.feedback', 0] },
+            updated_at: '$updated_at',
+            version: { $ifNull: ['$version', 1] }
+          }]
         }
       }
     ]
 
-    const pages = await db.collection('schema_pages').aggregate(pipeline).toArray()
+    const pages = await db.collection('schema_definitions').aggregate(pipeline).toArray()
 
     // Calculate statistics for current page
     const totalSchemas = pages.reduce((acc, page) => acc + (page.schemas?.length || 0), 0)
