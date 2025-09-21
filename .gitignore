@@ -37,4 +37,7 @@ yarn-error.log*
 .idea/
 
 # OS generated files
-Thumbs.db 
+Thumbs.db
+
+# App documentation (contains sensitive info)
+data/app_info.mb 
