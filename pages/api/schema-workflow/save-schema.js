@@ -35,14 +35,15 @@ export default async function handler(req, res) {
       schema_created_at: new Date()
     };
 
+    // Update existing document only - no upsert to prevent creating new documents
     const result = await collection.updateOne(
       { _id: page_id },
-      { 
-        $set: updateData,
-        $setOnInsert: { created_at: new Date() }
-      },
-      { upsert: true }
+      { $set: updateData }
     );
+    
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Page not found' });
+    }
     
     res.status(200).json({ 
       message: 'Schema saved successfully',
