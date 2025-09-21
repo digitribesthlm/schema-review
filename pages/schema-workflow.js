@@ -401,34 +401,16 @@ export default function SchemaWorkflow() {
                   </div>
                 )}
 
-                {/* Schema Display for Clients and Review Interface */}
+                {/* Schema Actions */}
                 {selectedPage.schema_body && (
                   <div className="mb-6">
                     <h3 className="font-medium mb-2">Schema Status</h3>
-                    {selectedPage.schema_body ? (
-                      <div>
-                        <div className="mb-4">
-                          <span className="text-green-600 font-medium">✓ Schema Available</span>
-                        </div>
-                        <h4 className="font-medium mb-2">Schema JSON-LD</h4>
-                        <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap">
-                          {(() => {
-                            // Handle schema_body as string or object
-                            const schemaText = typeof selectedPage.schema_body === 'string' 
-                              ? selectedPage.schema_body 
-                              : JSON.stringify(selectedPage.schema_body, null, 2);
-                            
-                            return schemaText.split('\n').map((line, index) => (
-                              <div key={index} className="flex">
-                                <span className="text-gray-400 mr-3 select-none">{index + 1}</span>
-                                <span>{line}</span>
-                              </div>
-                            ));
-                          })()}
-                        </pre>
-                        
-                        {/* Client Actions */}
-                        <div className="mt-4">
+                    <div className="mb-4">
+                      <span className="text-green-600 font-medium">✓ Schema Available</span>
+                    </div>
+                    
+                    {/* Review Actions */}
+                    <div className="mt-4">
                           <div className="mb-3">
                             <label className="block text-sm font-medium mb-2">Review Notes (optional)</label>
                             <textarea
