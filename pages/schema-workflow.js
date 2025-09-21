@@ -332,36 +332,61 @@ export default function SchemaWorkflow() {
                 )}
 
                 {/* Schema Display for Clients */}
-                {userRole === 'client' && selectedPage.schema_body && (
+                {userRole === 'client' && (
                   <div className="mb-6">
-                    <h3 className="font-medium mb-2">Schema JSON-LD</h3>
-                    <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap">
-                      {JSON.stringify(selectedPage.schema_body, null, 2).split('\n').map((line, index) => (
-                        <div key={index} className="flex">
-                          <span className="text-gray-400 mr-3 select-none">{index + 1}</span>
-                          <span>{line}</span>
+                    <h3 className="font-medium mb-2">Schema Status</h3>
+                    {selectedPage.schema_body ? (
+                      <div>
+                        <div className="mb-4">
+                          <span className="text-green-600 font-medium">✓ Schema Available</span>
                         </div>
-                      ))}
-                    </pre>
-                    
-                    {/* Client Actions */}
-                    <div className="mt-4 flex space-x-2">
-                      <button
-                        onClick={approveSchema}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                      >
-                        Approve Schema
-                      </button>
-                      <button
-                        onClick={() => {
-                          const comment = prompt('Add a comment about this schema:');
-                          if (comment) addComment(comment);
-                        }}
-                        className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                      >
-                        Add Comment
-                      </button>
-                    </div>
+                        <h4 className="font-medium mb-2">Schema JSON-LD</h4>
+                        <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap">
+                          {JSON.stringify(selectedPage.schema_body, null, 2).split('\n').map((line, index) => (
+                            <div key={index} className="flex">
+                              <span className="text-gray-400 mr-3 select-none">{index + 1}</span>
+                              <span>{line}</span>
+                            </div>
+                          ))}
+                        </pre>
+                        
+                        {/* Client Actions */}
+                        <div className="mt-4 flex space-x-2">
+                          <button
+                            onClick={approveSchema}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                          >
+                            Approve Schema
+                          </button>
+                          <button
+                            onClick={() => {
+                              const comment = prompt('Add a comment about this schema:');
+                              if (comment) addComment(comment);
+                            }}
+                            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                          >
+                            Add Comment
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="mb-4">
+                          <span className="text-red-600 font-medium">✗ No Schema Available</span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-4">
+                          This page does not have any schema markup yet. An admin needs to create and submit a schema for your review.
+                        </p>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h4 className="font-medium text-blue-800 mb-2">What happens next?</h4>
+                          <ul className="text-sm text-blue-700 space-y-1">
+                            <li>• Admin will analyze this page and create appropriate schema markup</li>
+                            <li>• You'll receive a notification when the schema is ready for review</li>
+                            <li>• You can then approve, reject, or request changes to the schema</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
