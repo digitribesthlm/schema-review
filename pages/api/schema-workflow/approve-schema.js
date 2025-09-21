@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import jwt from 'jsonwebtoken';
 
 const uri = process.env.MONGODB_URI;
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     };
 
     // Add client_id filter for data isolation if available
-    const filter = { _id: page_id };
+    const filter = { _id: new ObjectId(page_id) };
     if (userInfo?.client_id) {
       filter.client_id = userInfo.client_id;
     }

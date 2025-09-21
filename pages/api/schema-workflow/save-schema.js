@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
     // Update existing document only - no upsert to prevent creating new documents
     const result = await collection.updateOne(
-      { _id: page_id },
+      { _id: new ObjectId(page_id) },
       { $set: updateData }
     );
     
