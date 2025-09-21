@@ -198,7 +198,7 @@ export default function SchemaWorkflow() {
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="font-medium text-sm mb-1">
-                        {page.url.replace('https://www.climberbi.co.uk', '')}
+                        {new URL(page.url).pathname}
                       </div>
                       <div className="text-xs text-gray-600 mb-2">
                         {page.main_topic}

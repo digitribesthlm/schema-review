@@ -184,7 +184,7 @@ async function analyzeSchemaQuality(schemaData, pageContent, url) {
     }
 
     // 8. Specific Improvement Suggestions
-    if (!schemaText.includes('climber') && !schemaText.includes('bi')) {
+    if (!schemaText.includes('business') && !schemaText.includes('service')) {
       recommendations.push('Consider adding more company-specific branding and terminology')
     }
     

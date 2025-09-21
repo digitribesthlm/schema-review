@@ -13,8 +13,7 @@ export default async function handler(req, res) {
     // Admin users (you can expand this list)
     const adminEmails = [
       'manus@manus.com',
-      'admin@digitribe.se',
-      'james.sharp@climberbi.co.uk'
+      'admin@digitribe.se'
     ];
     
     if (adminEmails.includes(userEmail)) {
