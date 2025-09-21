@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Layout from '../components/Layout';
 
 export default function SchemaWorkflow() {
   const [pages, setPages] = useState([]);
@@ -155,16 +154,14 @@ export default function SchemaWorkflow() {
 
   if (loading) {
     return (
-      <Layout>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading pages...</div>
-        </div>
-      </Layout>
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg">Loading pages...</div>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Schema Workflow</h1>
@@ -349,6 +346,6 @@ export default function SchemaWorkflow() {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
