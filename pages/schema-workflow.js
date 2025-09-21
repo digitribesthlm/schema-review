@@ -66,37 +66,24 @@ export default function SchemaWorkflow() {
   };
 
   const saveSchema = async () => {
-    console.log('Save button clicked');
-    console.log('selectedPage:', selectedPage);
-    console.log('schemaJson:', schemaJson);
-    
-    if (!selectedPage || !schemaJson) {
-      console.log('Missing selectedPage or schemaJson, returning');
-      return;
-    }
-    
+    if (!selectedPage || !schemaJson) return;
+
     setSaving(true);
     try {
-      const requestBody = {
-        page_id: selectedPage._id,
-        schema_body: schemaJson, // Send as string, not parsed JSON
-        status: 'pending'
-      };
-      console.log('Sending request with body:', requestBody);
-      
       const response = await fetch('/api/schema-workflow/save-schema', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          page_id: selectedPage._id,
+          schema: schemaJson
+        }),
       });
 
       if (response.ok) {
         alert('Schema saved successfully!');
         fetchPages();
-        setSelectedPage(null);
-        setSchemaJson('');
       } else {
         alert('Error saving schema');
       }
@@ -108,7 +95,7 @@ export default function SchemaWorkflow() {
     }
   };
 
-  const approveSchema = async (notes = '') => {
+  const approveSchema = async (notes) => {
     if (!selectedPage) return;
 
     try {
@@ -137,7 +124,7 @@ export default function SchemaWorkflow() {
     }
   };
 
-  const rejectSchema = async (notes = '') => {
+  const rejectSchema = async (notes) => {
     if (!selectedPage) return;
 
     try {
@@ -244,44 +231,38 @@ export default function SchemaWorkflow() {
           {!selectedPage && (
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Pages ({pages.length})</h2>
-            <div className="space-y-2 max-h-96 overflow-y-auto">
-              {pages.map((page) => (
-                <div
-                  key={page._id}
-                  className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    selectedPage?._id === page._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                  }`}
-                  onClick={() => handlePageSelect(page)}
-                >
-                  <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm mb-1">
-                      {page.page_title || new URL(page.url).pathname}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      {page.bq_main_topic || page.main_topic || 'No topic available'}
-                    </div>
-                    <div className="text-xs text-gray-500 mb-2">
-                      {page.content_summary ? page.content_summary.substring(0, 100) + '...' : ''}
-                    </div>
-                    <div className="flex justify-between items-center">
-                      {getSchemaIndicator(page)}
-                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(page.status)}`}>
-                        {page.status || 'next'}
-                      </span>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {pages.map((page) => (
+                  <div
+                    key={page._id}
+                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                      selectedPage?._id === page._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                    onClick={() => handlePageSelect(page)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-sm">{page.page_title}</h3>
+                        <p className="text-xs text-gray-600 mt-1">{page.bq_main_topic || page.main_topic}</p>
+                        <p className="text-xs text-gray-500 mt-1 truncate">{page.content_summary}</p>
+                      </div>
+                      <div className="ml-4 text-right">
+                        {getSchemaIndicator(page)}
+                        <div className={`mt-1 px-2 py-1 rounded-full text-xs ${getStatusColor(page.status)}`}>
+                          {page.status || 'next'}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Page Details */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             {selectedPage ? (
-              <div>
+              <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Page Details</h2>
                   <button
@@ -335,7 +316,7 @@ export default function SchemaWorkflow() {
 
                 {/* Keywords */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Keywords ({selectedPage.bq_keywords?.length || 0})</h3>
+                  <h3 className="font-medium mb-2">Keywords ({(selectedPage.bq_keywords || selectedPage.keywords || []).length})</h3>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {(selectedPage.bq_keywords || selectedPage.keywords || []).slice(0, 10).map((keyword, index) => (
                       <span 
@@ -343,7 +324,7 @@ export default function SchemaWorkflow() {
                         className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
                         title={`Importance: ${(keyword.importance * 100).toFixed(0)}%`}
                       >
-                        {keyword.term} ({(keyword.importance * 100).toFixed(0)}%)
+                        {keyword.name} ({(keyword.importance * 100).toFixed(0)}%)
                       </span>
                     ))}
                     {(selectedPage.bq_keywords || selectedPage.keywords || []).length > 10 && (
@@ -356,7 +337,7 @@ export default function SchemaWorkflow() {
 
                 {/* Entities */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Entities ({selectedPage.bq_entities?.length || 0})</h3>
+                  <h3 className="font-medium mb-2">Entities ({(selectedPage.bq_entities || selectedPage.entities || []).length})</h3>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {(selectedPage.bq_entities || selectedPage.entities || []).slice(0, 12).map((entity, index) => (
                       <span 
@@ -382,24 +363,22 @@ export default function SchemaWorkflow() {
                 </div>
 
                 {/* Schema Section */}
-                {(
-                  <div className="mb-6">
-                    <h3 className="font-medium mb-2">Schema JSON-LD</h3>
-                    <textarea
-                      value={schemaJson}
-                      onChange={(e) => setSchemaJson(e.target.value)}
-                      className="w-full h-64 p-3 border rounded-lg font-mono text-sm"
-                      placeholder="Paste your Schema.org JSON-LD here..."
-                    />
-                    <button
-                      onClick={saveSchema}
-                      disabled={saving || !schemaJson}
-                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      {saving ? 'Saving...' : 'Save Schema'}
-                    </button>
-                  </div>
-                )}
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Schema JSON-LD</h3>
+                  <textarea
+                    value={schemaJson}
+                    onChange={(e) => setSchemaJson(e.target.value)}
+                    className="w-full h-64 p-3 border rounded-lg font-mono text-sm"
+                    placeholder="Paste your Schema.org JSON-LD here..."
+                  />
+                  <button
+                    onClick={saveSchema}
+                    disabled={saving || !schemaJson}
+                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {saving ? 'Saving...' : 'Save Schema'}
+                  </button>
+                </div>
 
                 {/* Schema Actions */}
                 {selectedPage.schema_body && (
@@ -411,68 +390,69 @@ export default function SchemaWorkflow() {
                     
                     {/* Review Actions */}
                     <div className="mt-4">
-                          <div className="mb-3">
-                            <label className="block text-sm font-medium mb-2">Review Notes (optional)</label>
-                            <textarea
-                              id="reviewNotes"
-                              className="w-full p-2 border rounded-lg text-sm"
-                              rows="3"
-                              placeholder="Add notes about your decision..."
-                            />
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => {
-                                const notes = document.getElementById('reviewNotes').value;
-                                approveSchema(notes);
-                              }}
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                              ✅ Approve Schema
-                            </button>
-                            <button
-                              onClick={() => {
-                                const notes = document.getElementById('reviewNotes').value;
-                                if (!notes.trim()) {
-                                  alert('Please add notes explaining why you are rejecting this schema.');
-                                  return;
-                                }
-                                rejectSchema(notes);
-                              }}
-                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                            >
-                              ❌ Reject Schema
-                            </button>
-                            <button
-                              onClick={() => {
-                                const comment = prompt('Add a comment about this schema:');
-                                if (comment) addComment(comment);
-                              }}
-                              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                            >
-                              💬 Add Comment
-                            </button>
-                          </div>
-                        </div>
+                      <div className="mb-3">
+                        <label className="block text-sm font-medium mb-2">Review Notes (optional)</label>
+                        <textarea
+                          id="reviewNotes"
+                          className="w-full p-2 border rounded-lg text-sm"
+                          rows="3"
+                          placeholder="Add notes about your decision..."
+                        />
                       </div>
-                    ) : (
-                      <div>
-                        <div className="mb-4">
-                          <span className="text-red-600 font-medium">✗ No Schema Available</span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-4">
-                          This page does not have any schema markup yet. An admin needs to create and submit a schema for your review.
-                        </p>
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <h4 className="font-medium text-blue-800 mb-2">What happens next?</h4>
-                          <ul className="text-sm text-blue-700 space-y-1">
-                            <li>• Admin will analyze this page and create appropriate schema markup</li>
-                            <li>• You'll receive a notification when the schema is ready for review</li>
-                            <li>• You can then approve, reject, or request changes to the schema</li>
-                          </ul>
-                        </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            const notes = document.getElementById('reviewNotes').value;
+                            approveSchema(notes);
+                          }}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        >
+                          ✅ Approve Schema
+                        </button>
+                        <button
+                          onClick={() => {
+                            const notes = document.getElementById('reviewNotes').value;
+                            if (!notes.trim()) {
+                              alert('Please add notes explaining why you are rejecting this schema.');
+                              return;
+                            }
+                            rejectSchema(notes);
+                          }}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                        >
+                          ❌ Reject Schema
+                        </button>
+                        <button
+                          onClick={() => {
+                            const comment = prompt('Add a comment about this schema:');
+                            if (comment) addComment(comment);
+                          }}
+                          className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                        >
+                          💬 Add Comment
+                        </button>
                       </div>
-                    )}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Schema Available */}
+                {!selectedPage.schema_body && (
+                  <div className="mb-6">
+                    <div className="mb-4">
+                      <span className="text-red-600 font-medium">✗ No Schema Available</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      This page does not have any schema markup yet. An admin needs to create and submit a schema for your review.
+                    </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-medium text-blue-800 mb-2">What happens next?</h4>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        <li>• Admin will analyze this page and create appropriate schema markup</li>
+                        <li>• You'll receive a notification when the schema is ready for review</li>
+                        <li>• You can then approve, reject, or request changes to the schema</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
 
@@ -533,7 +513,7 @@ export default function SchemaWorkflow() {
                     </div>
                   </div>
                 )}
-              </div>
+              </>
             ) : (
               <div className="text-center text-gray-500 py-8">
                 Select a page from the list to view details
