@@ -35,14 +35,6 @@ export default function Dashboard() {
     try {
       setLoading(true);
       
-      // Ensure we have authentication token
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('No token found, retrying in 500ms...');
-        setTimeout(fetchPages, 500);
-        return;
-      }
-      
       const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
       const data = await response.json();
       

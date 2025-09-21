@@ -24,7 +24,7 @@ export default function Login() {
       const data = await response.json()
 
       if (data.success) {
-        Cookies.set('auth-token', data.token, { expires: 7 })
+        // User data is now stored in HttpOnly cookie by the server
         toast.success('Login successful!')
         router.push(`/dashboard/${data.user.clientId}`)
       } else {

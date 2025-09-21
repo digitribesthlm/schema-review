@@ -18,17 +18,7 @@ export default function PageDetails() {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('No token found');
-        return;
-      }
-      
-      const response = await fetch(`/api/schema-workflow/pages?filter=all`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`/api/schema-workflow/pages?filter=all`);
       const pages = await response.json();
       
       // Find the specific page by ID

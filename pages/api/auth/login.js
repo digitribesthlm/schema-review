@@ -18,6 +18,8 @@ export default async function handler(req, res) {
     const result = await authenticateUser(email, password)
     
     if (result.success) {
+      // Set user data in session/cookie instead of JWT
+      res.setHeader('Set-Cookie', `user=${JSON.stringify(result.user)}; Path=/; HttpOnly`)
       res.status(200).json(result)
     } else {
       res.status(401).json(result)

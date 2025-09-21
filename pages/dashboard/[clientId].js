@@ -27,26 +27,16 @@ export default function Dashboard() {
   }, [clientId, user, filterStatus])
 
   const checkAuth = async () => {
-    const token = Cookies.get('auth-token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-
     try {
-      const response = await fetch('/api/auth/verify', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await fetch('/api/auth/verify')
 
       if (response.ok) {
         const data = await response.json()
         setUser(data.user)
       } else {
-        Cookies.remove('auth-token')
         router.push('/login')
       }
     } catch (error) {
-      Cookies.remove('auth-token')
       router.push('/login')
     }
   }
@@ -54,12 +44,7 @@ export default function Dashboard() {
   const fetchSchemas = async () => {
     try {
       setLoading(true)
-      const token = Cookies.get('auth-token')
-      const response = await fetch(`/api/schema-workflow/pages?filter=${filterStatus}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await fetch(`/api/schema-workflow/pages?filter=${filterStatus}`)
       
       if (response.ok) {
         const data = await response.json()
@@ -91,7 +76,8 @@ export default function Dashboard() {
   // Removed old schema handling functions - now using page-based workflow
 
   const handleLogout = () => {
-    Cookies.remove('auth-token')
+    // Clear the user cookie by setting it to expire
+    document.cookie = 'user=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
     toast.success('Logged out successfully')
     router.push('/login')
   }
