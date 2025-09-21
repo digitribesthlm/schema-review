@@ -405,13 +405,16 @@ export default function SchemaWorkflow() {
                     {/* Review Actions */}
                     <div className="mt-4">
                       <div className="mb-3">
-                        <label className="block text-sm font-medium mb-2">Review Notes (optional)</label>
+                        <label className="block text-sm font-medium mb-2">Decision Notes</label>
                         <textarea
                           id="reviewNotes"
                           className="w-full p-2 border rounded-lg text-sm"
                           rows="3"
-                          placeholder="Add notes about your decision..."
+                          placeholder="Explain your approval or rejection decision (saved when you click Approve/Reject)..."
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 These notes will be saved when you click Approve or Reject below
+                        </p>
                       </div>
                       <div className="flex space-x-2">
                         <button
