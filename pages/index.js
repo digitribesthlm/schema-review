@@ -11,13 +11,43 @@ export default function Dashboard() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchPages();
+    // Add small delay to ensure authentication is ready
+    const timer = setTimeout(() => {
+      fetchPages();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, [filter]);
+
+  // Also fetch when component becomes visible (tab switching)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchPages();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   const fetchPages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
+      
+      // Ensure we have authentication token
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token found, retrying in 500ms...');
+        setTimeout(fetchPages, 500);
+        return;
+      }
+      
+      const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
       
       console.log('Dashboard API Response:', data);
