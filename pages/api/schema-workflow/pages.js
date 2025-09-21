@@ -13,26 +13,32 @@ export default async function handler(req, res) {
     const db = client.db('agency');
     const collection = db.collection('schema_workflow');
     
-    const { filter } = req.query;
+    const { filter, client_id } = req.query;
     
-    let query = {};
+    // Base query with client_id filter
+    let query = { 
+      client_id: client_id || "673381e25e38ffb2f5d5216b" 
+    };
     
+    // Add additional filters
     switch (filter) {
       case 'no_schema':
-        query = { schema_body: { $exists: false } };
+        query.schema_body = { $exists: false };
         break;
       case 'pending':
-        query = { status: 'pending' };
+        query.status = 'pending';
         break;
       case 'approved':
-        query = { status: 'approved' };
+        query.status = 'approved';
         break;
       default:
-        // All pages
+        // All pages for this client
         break;
     }
 
+    console.log('Query:', JSON.stringify(query));
     const pages = await collection.find(query).sort({ _id: -1 }).toArray();
+    console.log('Found pages:', pages.length);
     
     res.status(200).json(pages);
   } catch (error) {
