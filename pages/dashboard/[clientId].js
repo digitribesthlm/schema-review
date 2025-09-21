@@ -222,7 +222,7 @@ export default function Dashboard() {
               {filteredPages.map((page) => (
                 <div 
                   key={page._id} 
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md cursor-pointer transition-all duration-200"
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-lg hover:border-hubspot-orange cursor-pointer transition-all duration-200 group"
                   onClick={() => router.push(`/schema-workflow?page=${page._id}`)}
                 >
                   <div className="flex items-center justify-between">
@@ -256,10 +256,11 @@ export default function Dashboard() {
                       )}
                     </div>
                     
-                    {/* Right side - Arrow */}
-                    <div className="flex-shrink-0 ml-4">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    {/* Right side - Edit indicator */}
+                    <div className="flex-shrink-0 ml-4 flex items-center space-x-2">
+                      <span className="text-xs text-gray-500 hidden sm:block">Click to edit</span>
+                      <svg className="h-5 w-5 text-hubspot-orange group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </div>
                   </div>
