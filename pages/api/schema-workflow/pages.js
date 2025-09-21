@@ -28,14 +28,21 @@ export default async function handler(req, res) {
     
     const { filter } = req.query;
     
+    // Debug: Log user info and query
+    console.log('Pages API - User Info:', userInfo);
+    console.log('Pages API - User Role:', userInfo?.role);
+    console.log('Pages API - User Client ID:', userInfo?.client_id);
+    
     // Base query with role-based data access
     let query = {};
     
     // Data isolation: Admin sees all, Client sees only their organization's data
     if (userInfo?.role === 'client' && userInfo?.client_id) {
       query.client_id = userInfo.client_id;
+      console.log('Pages API - Applied client_id filter:', userInfo.client_id);
+    } else {
+      console.log('Pages API - No client_id filter (admin or missing data)');
     }
-    // Admin users see all data (no client_id filter)
     
     // Add status filters
     switch (filter) {
@@ -56,9 +63,9 @@ export default async function handler(req, res) {
         break;
     }
 
-    console.log('Query:', JSON.stringify(query));
+    console.log('Pages API - Final Query:', JSON.stringify(query));
     const pages = await collection.find(query).sort({ _id: -1 }).toArray();
-    console.log('Found pages:', pages.length);
+    console.log('Pages API - Results Count:', pages.length);
     
     res.status(200).json(pages);
   } catch (error) {
