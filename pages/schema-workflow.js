@@ -358,7 +358,7 @@ export default function SchemaWorkflow() {
                 </div>
 
                 {/* Schema Section */}
-                {userRole === 'admin' && (
+                {(
                   <div className="mb-6">
                     <h3 className="font-medium mb-2">Schema JSON-LD</h3>
                     <textarea
@@ -378,7 +378,7 @@ export default function SchemaWorkflow() {
                 )}
 
                 {/* Schema Display for Clients and Review Interface */}
-                {(userRole === 'client' || userRole === 'admin') && selectedPage.schema_body && (
+                {selectedPage.schema_body && (
                   <div className="mb-6">
                     <h3 className="font-medium mb-2">Schema Status</h3>
                     {selectedPage.schema_body ? (
