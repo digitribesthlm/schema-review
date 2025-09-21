@@ -16,6 +16,17 @@ export default function SchemaWorkflow() {
     checkUserRole();
   }, [filter]);
 
+  // Auto-select page if page parameter is provided
+  useEffect(() => {
+    const { page } = router.query;
+    if (page && pages.length > 0) {
+      const foundPage = pages.find(p => p._id === page);
+      if (foundPage) {
+        handlePageSelect(foundPage);
+      }
+    }
+  }, [router.query, pages]);
+
   const fetchPages = async () => {
     try {
       const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
@@ -228,10 +239,11 @@ export default function SchemaWorkflow() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Page List */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Pages ({pages.length})</h2>
+        <div className={selectedPage ? "grid grid-cols-1 gap-6" : "grid grid-cols-1 lg:grid-cols-2 gap-6"}>
+          {/* Page List - only show if no specific page is selected */}
+          {!selectedPage && (
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold mb-4">Pages ({pages.length})</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {pages.map((page) => (
                 <div
@@ -263,13 +275,25 @@ export default function SchemaWorkflow() {
                 </div>
               ))}
             </div>
-          </div>
+            </div>
+          )}
 
           {/* Page Details */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             {selectedPage ? (
               <div>
-                <h2 className="text-xl font-semibold mb-4">Page Details</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold">Page Details</h2>
+                  <button
+                    onClick={() => {
+                      setSelectedPage(null);
+                      router.push('/schema-workflow', undefined, { shallow: true });
+                    }}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                  >
+                    ← Back to List
+                  </button>
+                </div>
                 
                 {/* Basic Info */}
                 <div className="mb-6">
