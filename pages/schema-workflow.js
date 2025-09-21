@@ -40,11 +40,15 @@ export default function SchemaWorkflow() {
 
   const handlePageSelect = async (page) => {
     setSelectedPage(page);
-    // Check for schema in different possible fields
+    // Handle schema_body as string (new unified structure)
     if (page.schema_body) {
-      setSchemaJson(JSON.stringify(page.schema_body, null, 2));
-    } else if (page.schema_json) {
-      setSchemaJson(JSON.stringify(page.schema_json, null, 2));
+      // If it's already a string, use it directly
+      if (typeof page.schema_body === 'string') {
+        setSchemaJson(page.schema_body);
+      } else {
+        // If it's an object, stringify it
+        setSchemaJson(JSON.stringify(page.schema_body, null, 2));
+      }
     } else {
       setSchemaJson('');
     }
@@ -179,7 +183,7 @@ export default function SchemaWorkflow() {
   };
 
   const getSchemaIndicator = (page) => {
-    if (page.schema_body || page.schema_json) {
+    if (page.schema_body) {
       return <span className="text-green-600">✓ Schema</span>;
     } else {
       return <span className="text-red-600">✗ No Schema</span>;
@@ -374,12 +378,19 @@ export default function SchemaWorkflow() {
                         </div>
                         <h4 className="font-medium mb-2">Schema JSON-LD</h4>
                         <pre className="bg-gray-100 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre-wrap">
-                          {JSON.stringify(selectedPage.schema_body, null, 2).split('\n').map((line, index) => (
-                            <div key={index} className="flex">
-                              <span className="text-gray-400 mr-3 select-none">{index + 1}</span>
-                              <span>{line}</span>
-                            </div>
-                          ))}
+                          {(() => {
+                            // Handle schema_body as string or object
+                            const schemaText = typeof selectedPage.schema_body === 'string' 
+                              ? selectedPage.schema_body 
+                              : JSON.stringify(selectedPage.schema_body, null, 2);
+                            
+                            return schemaText.split('\n').map((line, index) => (
+                              <div key={index} className="flex">
+                                <span className="text-gray-400 mr-3 select-none">{index + 1}</span>
+                                <span>{line}</span>
+                              </div>
+                            ));
+                          })()}
                         </pre>
                         
                         {/* Client Actions */}
@@ -446,6 +457,47 @@ export default function SchemaWorkflow() {
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Review Status */}
+                {selectedPage.reviewed_by && (
+                  <div className="mb-6">
+                    <h3 className="font-medium mb-2">Review Status</h3>
+                    <div className="bg-gray-50 border rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-600">Reviewed by:</span>
+                          <div className="text-gray-900">{selectedPage.reviewer_name || selectedPage.reviewed_by}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Decision:</span>
+                          <div className={`font-medium ${
+                            selectedPage.review_decision === 'approved' ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {selectedPage.review_decision === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Review Date:</span>
+                          <div className="text-gray-900">
+                            {selectedPage.reviewed_at ? new Date(selectedPage.reviewed_at).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Status:</span>
+                          <div className={`px-2 py-1 rounded-full text-xs inline-block ${getStatusColor(selectedPage.status)}`}>
+                            {selectedPage.status}
+                          </div>
+                        </div>
+                      </div>
+                      {selectedPage.review_notes && (
+                        <div className="mt-3 pt-3 border-t">
+                          <span className="font-medium text-gray-600">Review Notes:</span>
+                          <div className="text-gray-900 mt-1">{selectedPage.review_notes}</div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
