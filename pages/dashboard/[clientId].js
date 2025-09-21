@@ -3,9 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { toast } from 'react-hot-toast'
 import Cookies from 'js-cookie'
-import SchemaCard from '../../components/SchemaCard'
-import SchemaEditor from '../../components/SchemaEditor'
-import CreateSchemaModal from '../../components/CreateSchemaModal'
+// Removed old schema components - now using simplified page view
 
 export default function Dashboard() {
   const router = useRouter()
@@ -15,11 +13,8 @@ export default function Dashboard() {
   const [stats, setStats] = useState({})
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
-  const [selectedSchema, setSelectedSchema] = useState(null)
   const [filterStatus, setFilterStatus] = useState('all')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [recordsPerPage] = useState(10) // Can make this adjustable later
-  const [showCreateSchemaModal, setShowCreateSchemaModal] = useState(false)
+  // Removed pagination and modal state - using simplified view
 
   useEffect(() => {
     checkAuth()
@@ -29,7 +24,7 @@ export default function Dashboard() {
     if (clientId && user) {
       fetchSchemas()
     }
-  }, [clientId, user, currentPage])
+  }, [clientId, user, filterStatus])
 
   const checkAuth = async () => {
     const token = Cookies.get('auth-token')
@@ -60,7 +55,7 @@ export default function Dashboard() {
     try {
       setLoading(true)
       const token = Cookies.get('auth-token')
-      const response = await fetch(`/api/schema-workflow/pages?filter=all`, {
+      const response = await fetch(`/api/schema-workflow/pages?filter=${filterStatus}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -72,10 +67,12 @@ export default function Dashboard() {
         setPages(data)
         // Calculate stats from the workflow data
         const stats = {
-          total: data.length,
-          pending: data.filter(p => p.status === 'pending').length,
-          approved: data.filter(p => p.status === 'approved').length,
-          next: data.filter(p => p.status === 'next').length
+          total_pages: data.length,
+          total_schemas: data.filter(p => p.schema_body).length,
+          pending_schemas: data.filter(p => p.status === 'pending').length,
+          approved_schemas: data.filter(p => p.status === 'approved').length,
+          rejected_schemas: data.filter(p => p.status === 'rejected').length,
+          next_schemas: data.filter(p => p.status === 'next').length
         }
         setStats(stats)
         setPagination({ total: data.length, page: 1, pages: 1 })
@@ -89,82 +86,9 @@ export default function Dashboard() {
     }
   }
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage)
-    window.scrollTo(0, 0) // Scroll to top when changing pages
-  }
+  // Removed pagination - using simplified view
 
-  const handleEditSchema = (schema) => {
-    setSelectedSchema(schema)
-  }
-
-  const handleQuickApprove = async (schema) => {
-    try {
-      const response = await fetch('/api/schemas/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          schemaId: schema.schema_id,
-          action: 'approved',
-          feedback: ''
-        })
-      })
-
-      if (response.ok) {
-        toast.success('Schema approved successfully!')
-        fetchSchemas() // Refresh data
-      } else {
-        toast.error('Failed to approve schema')
-      }
-    } catch (error) {
-      toast.error('Failed to approve schema')
-    }
-  }
-
-  const handleQuickReject = async (schema) => {
-    const feedback = prompt('Please provide feedback for rejection:')
-    if (feedback === null) return // User cancelled
-
-    try {
-      const response = await fetch('/api/schemas/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          schemaId: schema.schema_id,
-          action: 'rejected',
-          feedback
-        })
-      })
-
-      if (response.ok) {
-        toast.success('Schema rejected')
-        fetchSchemas() // Refresh data
-      } else {
-        toast.error('Failed to reject schema')
-      }
-    } catch (error) {
-      toast.error('Failed to reject schema')
-    }
-  }
-
-  const handleSaveSchema = async (editedFields, feedback, action) => {
-    const response = await fetch('/api/schemas/approve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        schemaId: selectedSchema.schema_id,
-        editedFields,
-        feedback,
-        action
-      })
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to save schema')
-    }
-
-    fetchSchemas() // Refresh data
-  }
+  // Removed old schema handling functions - now using page-based workflow
 
   const handleLogout = () => {
     Cookies.remove('auth-token')
@@ -172,121 +96,13 @@ export default function Dashboard() {
     router.push('/login')
   }
 
-  // Get all schemas from all pages
-  const allSchemas = pages.reduce((acc, page) => {
-    const pageSchemas = (page.schemas || []).map(schema => ({
-      ...schema,
-      page_title: page.page_title,
-      page_url: page.url || page._id,
-      page_type: page.page_type
-    }))
-    return [...acc, ...pageSchemas]
-  }, [])
-
-  // Filter schemas based on status
-  const filteredSchemas = allSchemas.filter(schema => {
+  // Filter pages based on status
+  const filteredPages = pages.filter(page => {
     if (filterStatus === 'all') return true
-    return schema.approval_status === filterStatus
+    return page.status === filterStatus
   })
 
-  // Pagination component
-  const PaginationControls = () => {
-    if (!pagination.totalPages || pagination.totalPages <= 1) return null
-    
-    const pageNumbers = []
-    const maxPagesToShow = 5
-    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxPagesToShow / 2))
-    let endPage = Math.min(pagination.totalPages, startPage + maxPagesToShow - 1)
-    
-    // Adjust startPage if we're near the end
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1)
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i)
-    }
-
-    return (
-      <div className="flex items-center justify-between mt-8 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-hubspot-gray">
-            Page {pagination.currentPage} of {pagination.totalPages} 
-            ({pagination.totalRecords} total pages)
-          </span>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          {/* Previous Button */}
-          <button
-            onClick={() => handlePageChange(pagination.currentPage - 1)}
-            disabled={!pagination.hasPrevPage}
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              pagination.hasPrevPage
-                ? 'bg-hubspot-orange text-white hover:bg-orange-600'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Previous
-          </button>
-
-          {/* Page Numbers */}
-          <div className="flex space-x-1">
-            {startPage > 1 && (
-              <>
-                <button
-                  onClick={() => handlePageChange(1)}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-hubspot-gray hover:bg-gray-50"
-                >
-                  1
-                </button>
-                {startPage > 2 && <span className="px-2 py-2 text-hubspot-gray">...</span>}
-              </>
-            )}
-            
-            {pageNumbers.map(pageNum => (
-              <button
-                key={pageNum}
-                onClick={() => handlePageChange(pageNum)}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  pageNum === pagination.currentPage
-                    ? 'bg-hubspot-orange text-white'
-                    : 'text-hubspot-gray hover:bg-gray-50'
-                }`}
-              >
-                {pageNum}
-              </button>
-            ))}
-            
-            {endPage < pagination.totalPages && (
-              <>
-                {endPage < pagination.totalPages - 1 && <span className="px-2 py-2 text-hubspot-gray">...</span>}
-                <button
-                  onClick={() => handlePageChange(pagination.totalPages)}
-                  className="px-3 py-2 rounded-md text-sm font-medium text-hubspot-gray hover:bg-gray-50"
-                >
-                  {pagination.totalPages}
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Next Button */}
-          <button
-            onClick={() => handlePageChange(pagination.currentPage + 1)}
-            disabled={!pagination.hasNextPage}
-            className={`px-3 py-2 rounded-md text-sm font-medium ${
-              pagination.hasNextPage
-                ? 'bg-hubspot-orange text-white hover:bg-orange-600'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    )
-  }
+  // Removed pagination component - using simplified view
 
   if (loading) {
     return (
@@ -377,11 +193,11 @@ export default function Dashboard() {
           <div className="mb-6">
             <div className="flex space-x-1 bg-white rounded-lg p-1 shadow-sm border border-gray-200 w-fit">
               {[
-                { key: 'all', label: 'All Schemas', count: allSchemas.length },
-                { key: 'pending', label: 'Pending', count: allSchemas.filter(s => s.approval_status === 'pending').length },
-                { key: 'approved', label: 'Approved', count: allSchemas.filter(s => s.approval_status === 'approved').length },
-                { key: 'needs_revision', label: 'Needs Revision', count: allSchemas.filter(s => s.approval_status === 'needs_revision').length },
-                { key: 'rejected', label: 'Rejected', count: allSchemas.filter(s => s.approval_status === 'rejected').length }
+                { key: 'all', label: 'All Pages', count: pages.length },
+                { key: 'next', label: 'No Schema', count: pages.filter(p => p.status === 'next').length },
+                { key: 'pending', label: 'Pending', count: pages.filter(p => p.status === 'pending').length },
+                { key: 'approved', label: 'Approved', count: pages.filter(p => p.status === 'approved').length },
+                { key: 'rejected', label: 'Rejected', count: pages.filter(p => p.status === 'rejected').length }
               ].map(({ key, label, count }) => (
                 <button
                   key={key}
@@ -399,100 +215,78 @@ export default function Dashboard() {
           </div>
 
           {/* Current Page Info */}
-          {pagination.totalPages > 1 && (
-            <div className="mb-4">
-              <div className="text-sm text-hubspot-gray bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 w-fit">
-                Showing page {pagination.currentPage} of {pagination.totalPages} 
-                ({filteredSchemas.length} schemas on this page)
-              </div>
+          <div className="mb-4">
+            <div className="text-sm text-hubspot-gray bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 w-fit">
+              Showing {filteredPages.length} pages
+              {filterStatus !== 'all' && ` (${filterStatus} status)`}
             </div>
-          )}
+          </div>
 
-          {/* Schemas List */}
-          {filteredSchemas.length === 0 ? (
-            <div className="card">
-              <div className="card-body text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-hubspot-gray mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-hubspot-dark mb-2">
-                  {filterStatus === 'all' ? 'No schemas found on this page' : `No ${filterStatus} schemas on this page`}
-                </h3>
-                <p className="text-hubspot-gray">
-                  {filterStatus === 'all' 
-                    ? 'Try navigating to other pages or check if data has been loaded.' 
-                    : `No schemas with ${filterStatus} status on this page. Try other pages.`
-                  }
-                </p>
-              </div>
+          {/* Simple Pages List */}
+          {filteredPages.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No pages found</h3>
+              <p className="text-gray-500">No pages available for the selected filter.</p>
             </div>
           ) : (
-            <div className="space-y-6">
-              {filteredSchemas.map((schema) => (
-                <div key={schema.schema_id} className="card">
-                  <div className="card-body">
-                    {/* Page Info Header */}
-                    <div className="mb-4 pb-4 border-b border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-hubspot-dark">
-                            {schema.page_title || 'Untitled Page'}
-                          </h3>
-                          {schema.page_url && (
-                            <a 
-                              href={schema.page_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-hubspot-orange hover:underline"
-                            >
-                              {schema.page_url} ↗
-                            </a>
-                          )}
-                        </div>
-                        <span className="badge badge-info">
-                          {schema.page_type || 'Unknown'}
+            <div className="space-y-3">
+              {filteredPages.map((page) => (
+                <div 
+                  key={page._id} 
+                  className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md cursor-pointer transition-all duration-200"
+                  onClick={() => router.push(`/schema-workflow?page=${page._id}`)}
+                >
+                  <div className="flex items-center justify-between">
+                    {/* Left side - Page info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                          {page.page_title || 'Untitled Page'}
+                        </h3>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          page.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          page.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          page.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {page.status || 'next'}
                         </span>
+                        {page.schema_body && (
+                          <span className="inline-flex items-center text-green-600 text-xs font-medium">
+                            ✓ Has Schema
+                          </span>
+                        )}
                       </div>
+                      <p className="text-sm text-gray-600 truncate mt-1">
+                        {page.url}
+                      </p>
+                      {page.bq_main_topic && (
+                        <p className="text-sm text-gray-500 truncate mt-1">
+                          {page.bq_main_topic}
+                        </p>
+                      )}
                     </div>
-
-                    {/* Schema Card */}
-                    <SchemaCard
-                      schema={schema}
-                      onEdit={handleEditSchema}
-                      onApprove={handleQuickApprove}
-                      onReject={handleQuickReject}
-                    />
+                    
+                    {/* Right side - Arrow */}
+                    <div className="flex-shrink-0 ml-4">
+                      <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Pagination Controls */}
-          <PaginationControls />
+          {/* Pagination removed - showing all pages in table format */}
         </div>
       </div>
 
-      {/* Create Schema Modal */}
-      {showCreateSchemaModal && (
-        <CreateSchemaModal
-          onClose={() => setShowCreateSchemaModal(false)}
-          clientId={clientId}
-          onSuccess={() => {
-            setShowCreateSchemaModal(false)
-            fetchSchemas() // Refresh schemas after creation
-          }}
-        />
-      )}
-
-      {/* Schema Editor Modal */}
-      {selectedSchema && (
-        <SchemaEditor
-          schema={selectedSchema}
-          onSave={handleSaveSchema}
-          onClose={() => setSelectedSchema(null)}
-        />
-      )}
+      {/* Modals removed - using simplified page view */}
     </>
   )
 }

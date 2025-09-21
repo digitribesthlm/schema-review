@@ -198,7 +198,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Complete Data Table */}
+          {/* Simple Pages List */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">
@@ -214,165 +214,48 @@ export default function Dashboard() {
                 <div className="text-gray-500">No pages found for the selected filter.</div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Page Info
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Topic & Content
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Keywords
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Entities
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Schema Status
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Timestamps
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {pages.map((page, index) => (
-                      <tr key={page._id || index} className="hover:bg-gray-50">
-                        {/* Page Info */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="max-w-xs">
-                            <div className="text-sm font-medium text-gray-900 mb-1">
-                              {new URL(page.url || 'https://example.com').pathname}
-                            </div>
-                            <a 
-                              href={page.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline break-all"
-                            >
-                              {page.url}
-                            </a>
-                            <div className="text-xs text-gray-500 mt-1">
-                              ID: {page.page_id || page._id}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Topic & Content */}
-                        <td className="px-6 py-4">
-                          <div className="max-w-sm">
-                            <div className="text-sm font-medium text-gray-900 mb-2">
-                              {page.bq_main_topic || page.main_topic || 'No topic'}
-                            </div>
-                            {page.content_summary && (
-                              <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                                <strong>Summary:</strong> {truncateText(page.content_summary)}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Keywords */}
-                        <td className="px-6 py-4">
-                          <div className="max-w-xs">
-                            {page.bq_keywords && page.bq_keywords.length > 0 ? (
-                              <div className="space-y-1">
-                                {page.bq_keywords.slice(0, 3).map((keyword, idx) => (
-                                  <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                      {keyword.term}
-                                    </span>
-                                    <span className="text-xs text-gray-500 ml-2">
-                                      {(keyword.importance * 100).toFixed(0)}%
-                                    </span>
-                                  </div>
-                                ))}
-                                {page.bq_keywords.length > 3 && (
-                                  <div className="text-xs text-gray-500">
-                                    +{page.bq_keywords.length - 3} more
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-400">No keywords</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Entities */}
-                        <td className="px-6 py-4">
-                          <div className="max-w-xs">
-                            {page.bq_entities && page.bq_entities.length > 0 ? (
-                              <div className="space-y-1">
-                                {page.bq_entities.slice(0, 3).map((entity, idx) => (
-                                  <div key={idx} className="flex items-center justify-between">
-                                    <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                                      {entity.name}
-                                    </span>
-                                    <span className="text-xs text-gray-500 ml-2">
-                                      {entity.type}
-                                    </span>
-                                  </div>
-                                ))}
-                                {page.bq_entities.length > 3 && (
-                                  <div className="text-xs text-gray-500">
-                                    +{page.bq_entities.length - 3} more
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-gray-400">No entities</span>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Schema Status */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-2">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(page.status)}`}>
-                              {page.status || 'next'}
+              <div className="divide-y divide-gray-200">
+                {pages.map((page, index) => (
+                  <div 
+                    key={page._id || index} 
+                    className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => router.push(`/schema-workflow?page=${page._id}`)}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Left side - Page info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="text-lg font-medium text-gray-900 truncate">
+                            {page.page_title || new URL(page.url || 'https://example.com').pathname}
+                          </h3>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(page.status)}`}>
+                            {page.status || 'next'}
+                          </span>
+                          {page.schema_body && (
+                            <span className="inline-flex items-center text-green-600 text-xs font-medium">
+                              ✓ Has Schema
                             </span>
-                            <div className="text-xs">
-                              {page.schema_body ? (
-                                <span className="text-green-600">✓ Has Schema</span>
-                              ) : (
-                                <span className="text-red-600">✗ No Schema</span>
-                              )}
-                            </div>
-                            {page.comments && page.comments.length > 0 && (
-                              <div className="text-xs text-blue-600">
-                                {page.comments.length} comment(s)
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Timestamps */}
-                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                          <div className="space-y-1">
-                            <div>
-                              <strong>Created:</strong><br />
-                              {formatDate(page.created_at)}
-                            </div>
-                            <div>
-                              <strong>Updated:</strong><br />
-                              {formatDate(page.updated_at)}
-                            </div>
-                            {page.last_analyzed && (
-                              <div>
-                                <strong>Analyzed:</strong><br />
-                                {formatDate(page.last_analyzed)}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 truncate mb-1">
+                          {page.url}
+                        </p>
+                        {page.bq_main_topic && (
+                          <p className="text-sm text-gray-500 truncate">
+                            {page.bq_main_topic}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Right side - Arrow */}
+                      <div className="flex-shrink-0 ml-4">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
