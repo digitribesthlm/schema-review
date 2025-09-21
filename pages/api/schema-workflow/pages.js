@@ -28,10 +28,14 @@ export default async function handler(req, res) {
     
     const { filter } = req.query;
     
-    // Base query with client_id filter for data isolation
-    let query = { 
-      client_id: userInfo?.client_id || "673381e25e38ffb2f5d5216b" // Fallback for testing
-    };
+    // Base query with role-based data access
+    let query = {};
+    
+    // Data isolation: Admin sees all, Client sees only their organization's data
+    if (userInfo?.role === 'client' && userInfo?.client_id) {
+      query.client_id = userInfo.client_id;
+    }
+    // Admin users see all data (no client_id filter)
     
     // Add status filters
     switch (filter) {
