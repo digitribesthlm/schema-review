@@ -365,12 +365,26 @@ export default function SchemaWorkflow() {
                 {/* Schema Section */}
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Schema JSON-LD</h3>
-                  <textarea
-                    value={schemaJson}
-                    onChange={(e) => setSchemaJson(e.target.value)}
-                    className="w-full h-64 p-3 border rounded-lg font-mono text-sm"
-                    placeholder="Paste your Schema.org JSON-LD here..."
-                  />
+                  <div className="relative border rounded-lg overflow-hidden">
+                    <div className="flex">
+                      {/* Line numbers */}
+                      <div className="bg-gray-100 p-3 text-right text-xs text-gray-500 font-mono select-none min-w-[3rem] border-r">
+                        {schemaJson.split('\n').map((_, index) => (
+                          <div key={index} className="leading-5">
+                            {index + 1}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Textarea */}
+                      <textarea
+                        value={schemaJson}
+                        onChange={(e) => setSchemaJson(e.target.value)}
+                        className="flex-1 h-64 p-3 font-mono text-sm resize-none outline-none leading-5"
+                        placeholder="Paste your Schema.org JSON-LD here..."
+                        style={{ lineHeight: '1.25rem' }}
+                      />
+                    </div>
+                  </div>
                   <button
                     onClick={saveSchema}
                     disabled={saving || !schemaJson}
@@ -421,15 +435,6 @@ export default function SchemaWorkflow() {
                           className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                         >
                           ❌ Reject Schema
-                        </button>
-                        <button
-                          onClick={() => {
-                            const comment = prompt('Add a comment about this schema:');
-                            if (comment) addComment(comment);
-                          }}
-                          className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                        >
-                          💬 Add Comment
                         </button>
                       </div>
                     </div>
