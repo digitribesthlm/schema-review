@@ -2,10 +2,13 @@
 export const handleArticleFields = (schemaData) => {
   const fields = {}
   
-  // Handle @graph structure - find the Article object
+  // Handle @graph structure - find the Article object and Person entities
   let articleData = schemaData
+  let personEntities = []
+  
   if (schemaData['@graph'] && Array.isArray(schemaData['@graph'])) {
     articleData = schemaData['@graph'].find(item => item['@type'] === 'Article') || schemaData
+    personEntities = schemaData['@graph'].filter(item => item['@type'] === 'Person')
   }
   
   // Basic article fields
@@ -92,6 +95,54 @@ export const handleArticleFields = (schemaData) => {
       }
     }
   }
+
+  // Person entities fields (from @graph structure)
+  personEntities.forEach((person, index) => {
+    if (person.name) {
+      fields[`person_${index}_name`] = {
+        value: person.name,
+        field_type: 'text',
+        editable: true,
+        description: `Person #${index + 1} name`
+      }
+    }
+    
+    if (person.jobTitle) {
+      fields[`person_${index}_jobTitle`] = {
+        value: person.jobTitle,
+        field_type: 'text',
+        editable: true,
+        description: `${person.name || `Person #${index + 1}`} job title`
+      }
+    }
+    
+    if (person.email) {
+      fields[`person_${index}_email`] = {
+        value: person.email,
+        field_type: 'email',
+        editable: true,
+        description: `${person.name || `Person #${index + 1}`} email`
+      }
+    }
+    
+    if (person.telephone) {
+      fields[`person_${index}_telephone`] = {
+        value: person.telephone,
+        field_type: 'tel',
+        editable: true,
+        description: `${person.name || `Person #${index + 1}`} phone`
+      }
+    }
+    
+    if (person.sameAs) {
+      fields[`person_${index}_sameAs`] = {
+        value: person.sameAs,
+        field_type: 'url',
+        editable: true,
+        description: `${person.name || `Person #${index + 1}`} LinkedIn profile`
+      }
+    }
+  })
 
   // Publisher fields
   if (articleData.publisher) {
@@ -199,10 +250,13 @@ export const handleArticleFields = (schemaData) => {
 export const getArticleInitialFields = (schemaData) => {
   const initialFields = {}
   
-  // Handle @graph structure - find the Article object
+  // Handle @graph structure - find the Article object and Person entities
   let articleData = schemaData
+  let personEntities = []
+  
   if (schemaData['@graph'] && Array.isArray(schemaData['@graph'])) {
     articleData = schemaData['@graph'].find(item => item['@type'] === 'Article') || schemaData
+    personEntities = schemaData['@graph'].filter(item => item['@type'] === 'Person')
   }
   
   // Basic fields
@@ -239,6 +293,15 @@ export const getArticleInitialFields = (schemaData) => {
       if (articleData.publisher.address.addressCountry) initialFields.publisherAddressCountry = articleData.publisher.address.addressCountry
     }
   }
+  
+  // Person entities (from @graph structure)
+  personEntities.forEach((person, index) => {
+    if (person.name) initialFields[`person_${index}_name`] = person.name
+    if (person.jobTitle) initialFields[`person_${index}_jobTitle`] = person.jobTitle
+    if (person.email) initialFields[`person_${index}_email`] = person.email
+    if (person.telephone) initialFields[`person_${index}_telephone`] = person.telephone
+    if (person.sameAs) initialFields[`person_${index}_sameAs`] = person.sameAs
+  })
   
   return initialFields
 }
