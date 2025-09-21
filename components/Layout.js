@@ -41,19 +41,30 @@ export default function Layout({ children }) {
     return children;
   }
 
-  // Show loading or redirect to login if not authenticated
+  // Show loading with navigation
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen bg-gray-50">
+        <nav className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-4">
+                <Link href="/" className="text-xl font-bold text-gray-800">
+                  Schema Review
+                </Link>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading...</div>
+        </div>
       </div>
     );
   }
 
-  // Always show layout if we have a user (including default user)
-  if (!user) {
-    return children; // Show page without layout if no user
-  }
+  // Always show layout with navigation, even if no user
+  const displayUser = user || { name: 'User', role: 'user' };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -95,9 +106,9 @@ export default function Layout({ children }) {
               {/* User Menu */}
               <div className="flex items-center space-x-4">
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">{user.contact_name || user.name}</span>
+                  <span className="font-medium">{displayUser.contact_name || displayUser.name}</span>
                   <span className="ml-2 px-2 py-1 bg-gray-100 rounded-full text-xs">
-                    {user.role || 'user'}
+                    {displayUser.role || 'user'}
                   </span>
                 </div>
                 
