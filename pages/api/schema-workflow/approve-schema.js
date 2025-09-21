@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     };
 
     const result = await collection.updateOne(
-      { page_id: page_id },
+      { _id: page_id },
       { $set: updateData }
     );
     
