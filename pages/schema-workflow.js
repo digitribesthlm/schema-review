@@ -40,8 +40,11 @@ export default function SchemaWorkflow() {
 
   const handlePageSelect = async (page) => {
     setSelectedPage(page);
+    // Check for schema in different possible fields
     if (page.schema_body) {
       setSchemaJson(JSON.stringify(page.schema_body, null, 2));
+    } else if (page.schema_json) {
+      setSchemaJson(JSON.stringify(page.schema_json, null, 2));
     } else {
       setSchemaJson('');
     }
@@ -58,7 +61,7 @@ export default function SchemaWorkflow() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          page_id: selectedPage.page_id,
+          page_id: selectedPage._id,
           schema_body: JSON.parse(schemaJson),
           status: 'pending'
         }),
@@ -90,7 +93,7 @@ export default function SchemaWorkflow() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          page_id: selectedPage.page_id,
+          page_id: selectedPage._id,
           status: 'approved'
         }),
       });
@@ -118,7 +121,7 @@ export default function SchemaWorkflow() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          page_id: selectedPage.page_id,
+          page_id: selectedPage._id,
           comment: comment
         }),
       });
@@ -145,7 +148,7 @@ export default function SchemaWorkflow() {
   };
 
   const getSchemaIndicator = (page) => {
-    if (page.schema_body) {
+    if (page.schema_body || page.schema_json) {
       return <span className="text-green-600">✓ Schema</span>;
     } else {
       return <span className="text-red-600">✗ No Schema</span>;
@@ -186,27 +189,30 @@ export default function SchemaWorkflow() {
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {pages.map((page) => (
                 <div
-                  key={page.page_id}
+                  key={page._id}
                   className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                    selectedPage?.page_id === page.page_id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    selectedPage?._id === page._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
                   }`}
                   onClick={() => handlePageSelect(page)}
                 >
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm mb-1">
-                        {new URL(page.url).pathname}
-                      </div>
-                      <div className="text-xs text-gray-600 mb-2">
-                        {page.main_topic}
-                      </div>
-                      <div className="flex justify-between items-center">
-                        {getSchemaIndicator(page)}
-                        <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(page.status)}`}>
-                          {page.status || 'next'}
-                        </span>
-                      </div>
+                  <div className="flex-1">
+                    <div className="font-medium text-sm mb-1">
+                      {page.page_title || new URL(page.url).pathname}
                     </div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      {page.bq_main_topic || page.main_topic || 'No topic available'}
+                    </div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      {page.content_summary ? page.content_summary.substring(0, 100) + '...' : ''}
+                    </div>
+                    <div className="flex justify-between items-center">
+                      {getSchemaIndicator(page)}
+                      <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(page.status)}`}>
+                        {page.status || 'next'}
+                      </span>
+                    </div>
+                  </div>
                   </div>
                 </div>
               ))}
@@ -221,12 +227,17 @@ export default function SchemaWorkflow() {
                 
                 {/* Basic Info */}
                 <div className="mb-6">
+                  <h3 className="font-medium mb-2">Page Title</h3>
+                  <p className="text-sm text-gray-700 font-medium">{selectedPage.page_title}</p>
+                </div>
+
+                <div className="mb-6">
                   <h3 className="font-medium mb-2">URL</h3>
                   <a 
                     href={selectedPage.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm"
+                    className="text-blue-600 hover:underline text-sm break-all"
                   >
                     {selectedPage.url}
                   </a>
@@ -234,36 +245,69 @@ export default function SchemaWorkflow() {
 
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Main Topic</h3>
-                  <p className="text-sm text-gray-700">{selectedPage.main_topic}</p>
+                  <p className="text-sm text-gray-700">{selectedPage.bq_main_topic || selectedPage.main_topic || 'No topic available'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Content Summary</h3>
+                  <p className="text-sm text-gray-700">{selectedPage.content_summary || 'No summary available'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Page ID & Status</h3>
+                  <div className="flex items-center space-x-4">
+                    <span className="text-sm text-gray-600">ID: {selectedPage.bq_page_id || selectedPage.page_id}</span>
+                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(selectedPage.status)}`}>
+                      {selectedPage.status || 'next'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Keywords */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Keywords</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedPage.keywords?.slice(0, 5).map((keyword, index) => (
+                  <h3 className="font-medium mb-2">Keywords ({selectedPage.bq_keywords?.length || 0})</h3>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    {(selectedPage.bq_keywords || selectedPage.keywords || []).slice(0, 10).map((keyword, index) => (
                       <span 
                         key={index}
                         className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+                        title={`Importance: ${(keyword.importance * 100).toFixed(0)}%`}
                       >
                         {keyword.term} ({(keyword.importance * 100).toFixed(0)}%)
                       </span>
                     ))}
+                    {(selectedPage.bq_keywords || selectedPage.keywords || []).length > 10 && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                        +{(selectedPage.bq_keywords || selectedPage.keywords || []).length - 10} more
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Entities */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Entities</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedPage.entities?.slice(0, 6).map((entity, index) => (
+                  <h3 className="font-medium mb-2">Entities ({selectedPage.bq_entities?.length || 0})</h3>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                    {(selectedPage.bq_entities || selectedPage.entities || []).slice(0, 12).map((entity, index) => (
                       <span 
                         key={index}
-                        className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs"
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          entity.type === 'organization' ? 'bg-purple-100 text-purple-800' :
+                          entity.type === 'product' ? 'bg-green-100 text-green-800' :
+                          entity.type === 'person' ? 'bg-yellow-100 text-yellow-800' :
+                          entity.type === 'concept' ? 'bg-blue-100 text-blue-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}
+                        title={`Type: ${entity.type}, Importance: ${(entity.importance * 100).toFixed(0)}%`}
                       >
                         {entity.name} ({entity.type})
                       </span>
                     ))}
+                    {(selectedPage.bq_entities || selectedPage.entities || []).length > 12 && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                        +{(selectedPage.bq_entities || selectedPage.entities || []).length - 12} more
+                      </span>
+                    )}
                   </div>
                 </div>
 
