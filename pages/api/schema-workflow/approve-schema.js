@@ -1,5 +1,4 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import jwt from 'jsonwebtoken';
 
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
@@ -10,15 +9,22 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get user info from JWT token
-    const token = req.headers.authorization?.replace('Bearer ', '');
+    // Get user info from cookie (no more JWT)
     let userInfo = null;
     
-    if (token) {
-      try {
-        userInfo = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
-      } catch (error) {
-        console.log('JWT verification failed:', error.message);
+    if (req.headers.cookie) {
+      const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
+        const [key, value] = cookie.trim().split('=');
+        acc[key] = value;
+        return acc;
+      }, {});
+      
+      if (cookies.user) {
+        try {
+          userInfo = JSON.parse(decodeURIComponent(cookies.user));
+        } catch (error) {
+          console.log('Cookie parsing failed:', error.message);
+        }
       }
     }
 
@@ -40,7 +46,7 @@ export default async function handler(req, res) {
     const updateData = {
       status: status,
       reviewed_by: userInfo?.email || 'unknown',
-      reviewer_name: userInfo?.name || 'Unknown User',
+      reviewer_name: userInfo?.full_name || userInfo?.name || userInfo?.email || 'Unknown User',
       review_decision: status,
       review_notes: notes || '',
       reviewed_at: new Date(),
