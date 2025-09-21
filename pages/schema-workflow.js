@@ -55,20 +55,30 @@ export default function SchemaWorkflow() {
   };
 
   const saveSchema = async () => {
-    if (!selectedPage || !schemaJson) return;
+    console.log('Save button clicked');
+    console.log('selectedPage:', selectedPage);
+    console.log('schemaJson:', schemaJson);
+    
+    if (!selectedPage || !schemaJson) {
+      console.log('Missing selectedPage or schemaJson, returning');
+      return;
+    }
     
     setSaving(true);
     try {
+      const requestBody = {
+        page_id: selectedPage._id,
+        schema_body: schemaJson, // Send as string, not parsed JSON
+        status: 'pending'
+      };
+      console.log('Sending request with body:', requestBody);
+      
       const response = await fetch('/api/schema-workflow/save-schema', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          page_id: selectedPage._id,
-          schema_body: schemaJson, // Send as string, not parsed JSON
-          status: 'pending'
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.ok) {
