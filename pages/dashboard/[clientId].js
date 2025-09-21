@@ -165,7 +165,7 @@ export default function Dashboard() {
     const pageSchemas = (page.schemas || []).map(schema => ({
       ...schema,
       page_title: page.page_title,
-      page_url: page._id,
+      page_url: page.url || page._id,
       page_type: page.page_type
     }))
     return [...acc, ...pageSchemas]
@@ -421,17 +421,23 @@ export default function Dashboard() {
                     <div className="mb-4 pb-4 border-b border-gray-200">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="font-semibold text-hubspot-dark">{schema.page_title}</h3>
-                          <a 
-                            href={schema.page_url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-hubspot-orange hover:underline"
-                          >
-                            {schema.page_url} ↗
-                          </a>
+                          <h3 className="font-semibold text-hubspot-dark">
+                            {schema.page_title || 'Untitled Page'}
+                          </h3>
+                          {schema.page_url && (
+                            <a 
+                              href={schema.page_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-hubspot-orange hover:underline"
+                            >
+                              {schema.page_url} ↗
+                            </a>
+                          )}
                         </div>
-                        <span className="badge badge-info">{schema.page_type}</span>
+                        <span className="badge badge-info">
+                          {schema.page_type || 'Unknown'}
+                        </span>
                       </div>
                     </div>
 

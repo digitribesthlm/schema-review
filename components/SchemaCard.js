@@ -32,7 +32,11 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
       return fields.map(([key, field]) => ({
         key,
         label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-        value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
+        value: Array.isArray(field.value) 
+          ? field.value.join(', ') 
+          : typeof field.value === 'object' && field.value !== null
+            ? JSON.stringify(field.value)
+            : field.value,
         editable: field.editable
       }))
     }
@@ -677,7 +681,11 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
       return Object.entries(schema.editable_fields).map(([key, field]) => ({
         key,
         label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-        value: Array.isArray(field.value) ? field.value.join(', ') : field.value,
+        value: Array.isArray(field.value) 
+          ? field.value.join(', ') 
+          : typeof field.value === 'object' && field.value !== null
+            ? JSON.stringify(field.value)
+            : field.value,
         editable: field.editable,
         fieldType: field.field_type,
         description: field.description
@@ -2053,7 +2061,12 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
               </span>
               <div className="flex-1 min-w-0">
                 <span className="text-hubspot-dark break-words">
-                  {value || 'Not set'}
+                  {typeof value === 'string' || typeof value === 'number' 
+                    ? value || 'Not set'
+                    : typeof value === 'object' && value !== null
+                      ? JSON.stringify(value)
+                      : 'Not set'
+                  }
                 </span>
                 {editable && (
                   <span className="ml-2 text-green-600 text-xs">✓ Editable</span>
@@ -2146,7 +2159,12 @@ export default function SchemaCard({ schema, onEdit, onApprove, onReject }) {
                       </div>
                     </div>
                     <div className="text-sm text-hubspot-dark break-words">
-                      {value || <span className="text-hubspot-gray italic">Not set</span>}
+                      {typeof value === 'string' || typeof value === 'number' 
+                        ? value || <span className="text-hubspot-gray italic">Not set</span>
+                        : typeof value === 'object' && value !== null
+                          ? <code className="text-xs bg-gray-100 px-1 rounded">{JSON.stringify(value)}</code>
+                          : <span className="text-hubspot-gray italic">Not set</span>
+                      }
                     </div>
                     {description && (
                       <div className="text-xs text-hubspot-gray mt-1">{description}</div>
