@@ -316,7 +316,12 @@ export default function SchemaWorkflow() {
 
                 {/* Keywords */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Keywords ({(selectedPage.bq_keywords || selectedPage.keywords || []).length})</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium">Keywords ({(selectedPage.bq_keywords || selectedPage.keywords || []).length})</h3>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      Relevance score: 100 = most relevant, 0 = least relevant
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {(selectedPage.bq_keywords || selectedPage.keywords || []).slice(0, 10).map((keyword, index) => {
                       // Handle both string and number importance values
@@ -344,7 +349,12 @@ export default function SchemaWorkflow() {
 
                 {/* Entities */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Entities ({(selectedPage.bq_entities || selectedPage.entities || []).length})</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="font-medium">Entities ({(selectedPage.bq_entities || selectedPage.entities || []).length})</h3>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      Hover to see relevance score and entity type
+                    </span>
+                  </div>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {(selectedPage.bq_entities || selectedPage.entities || []).slice(0, 12).map((entity, index) => {
                       // Handle both string and number importance values
