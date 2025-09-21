@@ -318,15 +318,22 @@ export default function SchemaWorkflow() {
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Keywords ({(selectedPage.bq_keywords || selectedPage.keywords || []).length})</h3>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                    {(selectedPage.bq_keywords || selectedPage.keywords || []).slice(0, 10).map((keyword, index) => (
-                      <span 
-                        key={index}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                        title={`Importance: ${(keyword.importance * 100).toFixed(0)}%`}
-                      >
-                        {keyword.name} ({(keyword.importance * 100).toFixed(0)}%)
-                      </span>
-                    ))}
+                    {(selectedPage.bq_keywords || selectedPage.keywords || []).slice(0, 10).map((keyword, index) => {
+                      // Handle both string and number importance values
+                      const importance = parseFloat(keyword.importance || 0);
+                      const relevanceScore = (importance * 100).toFixed(0);
+                      const keywordText = keyword.term || keyword.name || 'Unknown';
+                      
+                      return (
+                        <span 
+                          key={index}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
+                          title={`Relevance Score: ${relevanceScore}/100`}
+                        >
+                          {keywordText} ({relevanceScore})
+                        </span>
+                      );
+                    })}
                     {(selectedPage.bq_keywords || selectedPage.keywords || []).length > 10 && (
                       <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
                         +{(selectedPage.bq_keywords || selectedPage.keywords || []).length - 10} more
@@ -339,21 +346,27 @@ export default function SchemaWorkflow() {
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Entities ({(selectedPage.bq_entities || selectedPage.entities || []).length})</h3>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                    {(selectedPage.bq_entities || selectedPage.entities || []).slice(0, 12).map((entity, index) => (
-                      <span 
-                        key={index}
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          entity.type === 'organization' ? 'bg-purple-100 text-purple-800' :
-                          entity.type === 'product' ? 'bg-green-100 text-green-800' :
-                          entity.type === 'person' ? 'bg-yellow-100 text-yellow-800' :
-                          entity.type === 'concept' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}
-                        title={`Type: ${entity.type}, Importance: ${(entity.importance * 100).toFixed(0)}%`}
-                      >
-                        {entity.name} ({entity.type})
-                      </span>
-                    ))}
+                    {(selectedPage.bq_entities || selectedPage.entities || []).slice(0, 12).map((entity, index) => {
+                      // Handle both string and number importance values
+                      const importance = parseFloat(entity.importance || 0);
+                      const relevanceScore = (importance * 100).toFixed(0);
+                      
+                      return (
+                        <span 
+                          key={index}
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            entity.type === 'organization' ? 'bg-purple-100 text-purple-800' :
+                            entity.type === 'product' ? 'bg-green-100 text-green-800' :
+                            entity.type === 'person' ? 'bg-yellow-100 text-yellow-800' :
+                            entity.type === 'concept' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}
+                          title={`Type: ${entity.type}, Relevance: ${relevanceScore}/100`}
+                        >
+                          {entity.name} ({entity.type})
+                        </span>
+                      );
+                    })}
                     {(selectedPage.bq_entities || selectedPage.entities || []).length > 12 && (
                       <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
                         +{(selectedPage.bq_entities || selectedPage.entities || []).length - 12} more
