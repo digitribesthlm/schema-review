@@ -59,19 +59,26 @@ export default function Dashboard() {
   const fetchSchemas = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/schemas/${clientId}?page=${currentPage}&limit=${recordsPerPage}`)
+      const response = await fetch(`/api/schema-workflow/pages?client_id=${clientId}`)
       
       if (response.ok) {
         const data = await response.json()
         
-        setPages(data.pages)
-        setStats(data.stats)
-        setPagination(data.pagination)
+        setPages(data)
+        // Calculate stats from the workflow data
+        const stats = {
+          total: data.length,
+          pending: data.filter(p => p.status === 'pending').length,
+          approved: data.filter(p => p.status === 'approved').length,
+          next: data.filter(p => p.status === 'next').length
+        }
+        setStats(stats)
+        setPagination({ total: data.length, page: 1, pages: 1 })
       } else {
-        toast.error('Failed to load schemas')
+        toast.error('Failed to load pages')
       }
     } catch (error) {
-      toast.error('Failed to load schemas')
+      toast.error('Failed to load pages')
     } finally {
       setLoading(false)
     }
