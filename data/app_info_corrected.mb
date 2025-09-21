@@ -1,0 +1,371 @@
+Final Simple Specification - Schema Review System
+
+Core Requirements
+
+1. Data Isolation
+
+•
+Users only see schemas from their own organization
+
+•
+Strict client separation in all database queries
+
+•
+No cross-organization data access
+
+2. Simple Review Process
+
+•
+One review = final decision
+
+•
+User can APPROVE or REJECT
+
+•
+User can add notes/comments
+
+•
+Decision is immediately final
+
+3. Use Current System
+
+•
+Update existing schema_workflow collection only
+
+•
+No new collections needed
+
+•
+Minimal changes to existing APIs
+
+
+
+
+Database Schema
+
+schema_workflow Collection (Updated)
+
+JavaScript
+
+
+{
+  _id: ObjectId,
+  client_id: String,                 // Organization identifier for data isolation
+  url: String,
+  page_title: String,
+  content_summary: String,
+  bq_main_topic: String,
+  bq_keywords: Array,
+  bq_entities: Array,
+  status: String,                    // "next", "pending", "approved", "rejected"
+  schema_body: String,               // JSON-LD schema
+  
+  // Review tracking (NEW)
+  reviewed_by: String,               // Email of reviewer
+  reviewer_name: String,             // Name of reviewer
+  review_decision: String,           // "approved" | "rejected"
+  review_notes: String,              // Review comments
+  reviewed_at: Date,                 // Review timestamp
+  
+  created_at: Date,
+  updated_at: Date,
+  schema_created_at: Date
+}
+
+
+
+
+
+API Endpoints
+
+1. Get Pages (Updated for Data Isolation)
+
+JavaScript
+
+
+GET /api/schema-workflow/pages
+Headers: Authorization: Bearer <token>
+
+// Query filters by client_id automatically
+// Returns only user's organization data
+
+
+2. Save Schema (Existing - No Changes)
+
+JavaScript
+
+
+POST /api/schema-workflow/save-schema
+{
+  page_id: ObjectId,
+  schema_body: String
+}
+// Sets status to "pending"
+
+
+3. Review Schema (Updated)
+
+JavaScript
+
+
+POST /api/schema-workflow/review-schema
+{
+  page_id: ObjectId,
+  decision: "approved" | "rejected",
+  notes: String
+}
+Headers: Authorization: Bearer <token>
+
+// Updates document with review info
+// Sets final status based on decision
+
+
+
+
+
+Workflow States
+
+Simple Status Flow
+
+Plain Text
+
+
+"next" → (schema saved) → "pending" → (user reviews) → "approved" | "rejected"
+
+
+Status Definitions
+
+•
+"next": No schema created yet
+
+•
+"pending": Schema saved, awaiting review
+
+•
+"approved": User approved the schema
+
+•
+"rejected": User rejected the schema
+
+
+
+
+Implementation Changes
+
+1. Update Database Documents
+
+JavaScript
+
+
+// Add these fields to existing schema_workflow documents
+{
+  client_id: "org_123",              // Add to all existing docs
+  reviewed_by: null,                 // Initially null
+  reviewer_name: null,               // Initially null  
+  review_decision: null,             // Initially null
+  review_notes: null,                // Initially null
+  reviewed_at: null                  // Initially null
+}
+
+
+2. Update API Endpoints
+
+A. Update pages.js for Data Isolation
+
+JavaScript
+
+
+// Add client_id filter to all queries
+const pages = await collection.find({ 
+  client_id: userClientId  // Get from JWT token
+}).toArray();
+
+
+B. Update approve-schema.js → review-schema.js
+
+JavaScript
+
+
+// Rename and update to track reviewer
+const result = await collection.updateOne(
+  { _id: pageId, client_id: userClientId },
+  { 
+    $set: {
+      status: decision === "approved" ? "approved" : "rejected",
+      reviewed_by: userEmail,
+      reviewer_name: userName,
+      review_decision: decision,
+      review_notes: notes,
+      reviewed_at: new Date(),
+      updated_at: new Date()
+    }
+  }
+);
+
+
+3. Update Frontend Components
+
+A. Review Interface
+
+JavaScript
+
+
+<ReviewCard>
+  <SchemaPreview schema={schema_body} />
+  <ReviewActions>
+    <button onClick={() => submitReview("approved", notes)}>
+      ✅ Approve
+    </button>
+    <button onClick={() => submitReview("rejected", notes)}>
+      ❌ Reject  
+    </button>
+    <textarea 
+      placeholder="Add review notes..."
+      value={notes}
+      onChange={setNotes}
+    />
+  </ReviewActions>
+  
+  {/* Show existing review if any */}
+  {reviewed_by && (
+    <ExistingReview>
+      <p>Reviewed by: {reviewer_name}</p>
+      <p>Decision: {review_decision}</p>
+      <p>Notes: {review_notes}</p>
+      <p>Date: {reviewed_at}</p>
+    </ExistingReview>
+  )}
+</ReviewCard>
+
+
+B. Status Indicators
+
+JavaScript
+
+
+const getStatusBadge = (status) => {
+  switch(status) {
+    case "next": return <Badge color="gray">No Schema</Badge>
+    case "pending": return <Badge color="yellow">Pending Review</Badge>
+    case "approved": return <Badge color="green">Approved</Badge>
+    case "rejected": return <Badge color="red">Rejected</Badge>
+  }
+}
+
+
+
+
+
+Security & Data Isolation
+
+JWT Token Structure
+
+JavaScript
+
+
+{
+  user_id: "user123",
+  client_id: "org_123",              // Organization identifier
+  email: "user@company.com",
+  name: "John Doe",
+  exp: 1234567890
+}
+
+
+Data Isolation Rules
+
+1.
+All queries MUST include client_id filter
+
+2.
+Extract client_id from JWT token
+
+3.
+Never allow cross-organization access
+
+4.
+Validate user belongs to organization
+
+
+
+
+File Changes Required
+
+1. Update Existing Files
+
+•
+pages/api/schema-workflow/pages.js - Add client_id filtering
+
+•
+pages/api/schema-workflow/approve-schema.js - Rename to review-schema.js, add tracking
+
+•
+pages/schema-workflow.js - Update UI for review interface
+
+•
+lib/auth.js - Ensure JWT contains client_id
+
+2. Database Migration
+
+•
+Add client_id field to all existing documents
+
+•
+Initialize review fields as null
+
+3. No New Files Needed
+
+•
+Use existing structure
+
+•
+Minimal changes only
+
+
+
+
+Implementation Steps
+
+Step 1: Database Update
+
+1.
+Add client_id to all existing schema_workflow documents
+
+2.
+Add review tracking fields (initially null)
+
+Step 2: API Updates
+
+1.
+Update pages.js for data isolation
+
+2.
+Update approve-schema.js to review-schema.js with tracking
+
+3.
+Ensure JWT contains client_id
+
+Step 3: Frontend Updates
+
+1.
+Update schema-workflow.js for review interface
+
+2.
+Add status badges
+
+3.
+Show review information
+
+Step 4: Testing
+
+1.
+Test data isolation works
+
+2.
+Test review process
+
+3.
+Test status updates
+
+SIMPLE. CLEAN. FOCUSED.
+

@@ -59,7 +59,12 @@ export default function Dashboard() {
   const fetchSchemas = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/schema-workflow/pages?client_id=${clientId}`)
+      const token = Cookies.get('auth-token')
+      const response = await fetch(`/api/schema-workflow/pages?filter=all`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       
       if (response.ok) {
         const data = await response.json()

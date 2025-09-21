@@ -32,8 +32,13 @@ export default async function handler(req, res) {
     let query = {};
     
     // Filter by client_id for organization separation
-    if (userInfo?.client_id) {
-      query.client_id = userInfo.client_id;
+    // JWT token uses 'clientId' (camelCase), but database uses 'client_id' (snake_case)
+    console.log('[schema-workflow] User info from JWT:', userInfo);
+    if (userInfo?.clientId) {
+      query.client_id = userInfo.clientId;
+      console.log('[schema-workflow] Filtering by client_id:', userInfo.clientId);
+    } else {
+      console.log('[schema-workflow] No clientId in JWT token - no data isolation');
     }
     
     // Add status filters
@@ -55,7 +60,9 @@ export default async function handler(req, res) {
         break;
     }
 
+    console.log('[schema-workflow] Final query:', JSON.stringify(query, null, 2));
     const pages = await collection.find(query).sort({ _id: -1 }).toArray();
+    console.log('[schema-workflow] Found pages:', pages.length);
     
     res.status(200).json(pages);
   } catch (error) {
