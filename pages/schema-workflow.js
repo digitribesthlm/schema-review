@@ -62,7 +62,7 @@ export default function SchemaWorkflow() {
         },
         body: JSON.stringify({
           page_id: selectedPage._id,
-          schema_body: JSON.parse(schemaJson),
+          schema_body: schemaJson, // Send as string, not parsed JSON
           status: 'pending'
         }),
       });
@@ -83,7 +83,7 @@ export default function SchemaWorkflow() {
     }
   };
 
-  const approveSchema = async () => {
+  const approveSchema = async (notes = '') => {
     if (!selectedPage) return;
 
     try {
@@ -94,7 +94,8 @@ export default function SchemaWorkflow() {
         },
         body: JSON.stringify({
           page_id: selectedPage._id,
-          status: 'approved'
+          status: 'approved',
+          notes: notes
         }),
       });
 
@@ -108,6 +109,35 @@ export default function SchemaWorkflow() {
     } catch (error) {
       console.error('Error approving schema:', error);
       alert('Error approving schema');
+    }
+  };
+
+  const rejectSchema = async (notes = '') => {
+    if (!selectedPage) return;
+
+    try {
+      const response = await fetch('/api/schema-workflow/approve-schema', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          page_id: selectedPage._id,
+          status: 'rejected',
+          notes: notes
+        }),
+      });
+
+      if (response.ok) {
+        alert('Schema rejected successfully!');
+        fetchPages();
+        setSelectedPage(null);
+      } else {
+        alert('Error rejecting schema');
+      }
+    } catch (error) {
+      console.error('Error rejecting schema:', error);
+      alert('Error rejecting schema');
     }
   };
 
@@ -142,6 +172,7 @@ export default function SchemaWorkflow() {
     switch (status) {
       case 'approved': return 'text-green-600 bg-green-100';
       case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'rejected': return 'text-red-600 bg-red-100';
       case 'next': return 'text-blue-600 bg-blue-100';
       default: return 'text-gray-600 bg-gray-100';
     }
@@ -178,6 +209,7 @@ export default function SchemaWorkflow() {
               <option value="no_schema">No Schema</option>
               <option value="pending">Pending Review</option>
               <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
         </div>
@@ -351,22 +383,49 @@ export default function SchemaWorkflow() {
                         </pre>
                         
                         {/* Client Actions */}
-                        <div className="mt-4 flex space-x-2">
-                          <button
-                            onClick={approveSchema}
-                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                          >
-                            Approve Schema
-                          </button>
-                          <button
-                            onClick={() => {
-                              const comment = prompt('Add a comment about this schema:');
-                              if (comment) addComment(comment);
-                            }}
-                            className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
-                          >
-                            Add Comment
-                          </button>
+                        <div className="mt-4">
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium mb-2">Review Notes (optional)</label>
+                            <textarea
+                              id="reviewNotes"
+                              className="w-full p-2 border rounded-lg text-sm"
+                              rows="3"
+                              placeholder="Add notes about your decision..."
+                            />
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                const notes = document.getElementById('reviewNotes').value;
+                                approveSchema(notes);
+                              }}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                              ✅ Approve Schema
+                            </button>
+                            <button
+                              onClick={() => {
+                                const notes = document.getElementById('reviewNotes').value;
+                                if (!notes.trim()) {
+                                  alert('Please add notes explaining why you are rejecting this schema.');
+                                  return;
+                                }
+                                rejectSchema(notes);
+                              }}
+                              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                              ❌ Reject Schema
+                            </button>
+                            <button
+                              onClick={() => {
+                                const comment = prompt('Add a comment about this schema:');
+                                if (comment) addComment(comment);
+                              }}
+                              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700"
+                            >
+                              💬 Add Comment
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
