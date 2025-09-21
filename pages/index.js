@@ -19,18 +19,24 @@ export default function Dashboard() {
       setLoading(true);
       const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
       const data = await response.json();
+      
+      console.log('Dashboard API Response:', data);
+      console.log('Data length:', data.length);
+      
       setPages(data);
       
       // Calculate comprehensive stats
       const stats = {
         total: data.length,
-        with_schema: data.filter(p => p.schema_body).length,
+        with_schema: data.filter(p => p.schema_body && p.schema_body.trim() !== '').length,
         pending: data.filter(p => p.status === 'pending').length,
         approved: data.filter(p => p.status === 'approved').length,
         with_keywords: data.filter(p => p.bq_keywords && p.bq_keywords.length > 0).length,
         with_entities: data.filter(p => p.bq_entities && p.bq_entities.length > 0).length,
         with_summary: data.filter(p => p.content_summary).length
       };
+      
+      console.log('Dashboard Stats:', stats);
       setStats(stats);
     } catch (error) {
       console.error('Error fetching pages:', error);

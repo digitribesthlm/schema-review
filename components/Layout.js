@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 export default function Layout({ children }) {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,16 +16,9 @@ export default function Layout({ children }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-      } else {
-        // If auth fails, set a default user to show the layout
-        setUser({ name: 'User', role: 'user' });
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      // Set default user on error to show layout
-      setUser({ name: 'User', role: 'user' });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -41,29 +33,7 @@ export default function Layout({ children }) {
     return children;
   }
 
-  // Show loading with navigation
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
-                <Link href="/" className="text-xl font-bold text-gray-800">
-                  Schema Review
-                </Link>
-              </div>
-            </div>
-          </div>
-        </nav>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-lg">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Always show layout with navigation, even if no user
+  // Always show layout with navigation
   const displayUser = user || { name: 'User', role: 'user' };
 
   return (
