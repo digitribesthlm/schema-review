@@ -61,12 +61,6 @@ export default function Dashboard() {
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="flex justify-between items-center">
               <h1 className="text-2xl font-bold text-gray-900">Schema Dashboard</h1>
-              <button
-                onClick={() => router.push('/schema-workflow')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Schema Workflow
-              </button>
             </div>
           </div>
         </div>
