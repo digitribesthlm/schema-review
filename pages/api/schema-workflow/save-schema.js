@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   try {
     await client.connect();
     const db = client.db('agency');
-    const collection = db.collection('schema_workflow');
+    const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
     
     const { page_id, schema_body, status } = req.body;
     
@@ -54,5 +54,14 @@ export default async function handler(req, res) {
     res.status(500).json({ message: 'Internal server error' });
   } finally {
     await client.close();
+  }
+}
+
+// Increase request body limit to handle large JSON-LD payloads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '5mb'
+    }
   }
 }

@@ -13,7 +13,7 @@ async function populateSchemaWorkflow() {
     // Get data from schema_pages (topical analysis)
     const schemaPagesCollection = db.collection('schema_pages');
     const schemaDefinitionsCollection = db.collection('schema_definitions');
-    const workflowCollection = db.collection('schema_workflow');
+    const workflowCollection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
     
     // Clear existing workflow data
     await workflowCollection.deleteMany({});

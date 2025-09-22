@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 
 export default function SchemaWorkflow() {
@@ -9,6 +9,10 @@ export default function SchemaWorkflow() {
   const [selectedPage, setSelectedPage] = useState(null);
   const [schemaJson, setSchemaJson] = useState('');
   const [saving, setSaving] = useState(false);
+  const [editorFullscreen, setEditorFullscreen] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(400);
+  const textareaRef = useRef(null);
+  const gutterRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -26,6 +30,19 @@ export default function SchemaWorkflow() {
       }
     }
   }, [router.query, pages]);
+
+  // Auto-size editor height (up to 70vh) and keep gutter in sync
+  useEffect(() => {
+    const adjustHeight = () => {
+      if (!textareaRef.current) return;
+      const maxHeight = Math.floor(window.innerHeight * 0.7);
+      const next = Math.min(Math.max(textareaRef.current.scrollHeight, 240), maxHeight);
+      setEditorHeight(next);
+    };
+    adjustHeight();
+    window.addEventListener('resize', adjustHeight);
+    return () => window.removeEventListener('resize', adjustHeight);
+  }, [schemaJson]);
 
   const fetchPages = async () => {
     try {
@@ -77,7 +94,8 @@ export default function SchemaWorkflow() {
         },
         body: JSON.stringify({
           page_id: selectedPage._id,
-          schema: schemaJson
+          // API expects `schema_body` (string or object)
+          schema_body: schemaJson
         }),
       });
 
@@ -387,11 +405,25 @@ export default function SchemaWorkflow() {
 
                 {/* Schema Section */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Schema JSON-LD</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">Schema JSON-LD</h3>
+                    <button
+                      type="button"
+                      onClick={() => setEditorFullscreen(true)}
+                      className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
+                      title="Open fullscreen editor"
+                    >
+                      ⤢ Expand
+                    </button>
+                  </div>
                   <div className="relative border rounded-lg overflow-hidden">
                     <div className="flex">
                       {/* Line numbers */}
-                      <div className="bg-gray-100 p-3 text-right text-xs text-gray-500 font-mono select-none min-w-[3rem] border-r">
+                      <div
+                        ref={gutterRef}
+                        className="bg-gray-100 p-3 text-right text-xs text-gray-500 font-mono select-none min-w-[3rem] border-r overflow-y-auto"
+                        style={{ height: editorHeight }}
+                      >
                         {schemaJson.split('\n').map((_, index) => (
                           <div key={index} className="leading-5">
                             {index + 1}
@@ -400,11 +432,15 @@ export default function SchemaWorkflow() {
                       </div>
                       {/* Textarea */}
                       <textarea
+                        ref={textareaRef}
                         value={schemaJson}
                         onChange={(e) => setSchemaJson(e.target.value)}
-                        className="flex-1 h-64 p-3 font-mono text-sm resize-none outline-none leading-5"
+                        onScroll={(e) => {
+                          if (gutterRef.current) gutterRef.current.scrollTop = e.target.scrollTop;
+                        }}
+                        className="flex-1 p-3 font-mono text-sm outline-none leading-5"
                         placeholder="Paste your Schema.org JSON-LD here..."
-                        style={{ lineHeight: '1.25rem' }}
+                        style={{ height: editorHeight, lineHeight: '1.25rem', whiteSpace: 'pre', overflowY: 'auto' }}
                       />
                     </div>
                   </div>
@@ -416,6 +452,55 @@ export default function SchemaWorkflow() {
                     {saving ? 'Saving...' : 'Save Schema'}
                   </button>
                 </div>
+
+                {editorFullscreen && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-6">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+                      <div className="flex items-center justify-between p-3 border-b">
+                        <h4 className="font-medium">Schema JSON-LD (Fullscreen)</h4>
+                        <button
+                          type="button"
+                          onClick={() => setEditorFullscreen(false)}
+                          className="px-2 py-1 text-xs border rounded hover:bg-gray-50"
+                        >
+                          ✕ Close
+                        </button>
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="flex h-full">
+                          <div className="bg-gray-100 p-3 text-right text-xs text-gray-500 font-mono select-none min-w-[3rem] border-r overflow-y-auto">
+                            {schemaJson.split('\n').map((_, index) => (
+                              <div key={index} className="leading-5">
+                                {index + 1}
+                              </div>
+                            ))}
+                          </div>
+                          <textarea
+                            value={schemaJson}
+                            onChange={(e) => setSchemaJson(e.target.value)}
+                            className="flex-1 p-3 font-mono text-sm outline-none leading-5"
+                            style={{ height: 'calc(90vh - 100px)', lineHeight: '1.25rem', whiteSpace: 'pre' }}
+                          />
+                        </div>
+                      </div>
+                      <div className="p-3 border-t flex justify-end gap-2">
+                        <button
+                          onClick={() => setEditorFullscreen(false)}
+                          className="px-3 py-2 border rounded"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={saveSchema}
+                          disabled={saving || !schemaJson}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {saving ? 'Saving…' : 'Save Schema'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Schema Actions */}
                 {selectedPage.schema_body && (

@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   try {
     await client.connect();
     const db = client.db('agency');
-    const collection = db.collection('schema_workflow');
+    const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
     
     const { page_id, comment } = req.body;
     
