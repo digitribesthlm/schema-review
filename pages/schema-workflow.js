@@ -300,15 +300,6 @@ export default function SchemaWorkflow() {
               <>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Page Details</h2>
-                  <button
-                    onClick={() => {
-                      setSelectedPage(null);
-                      router.push('/schema-workflow', undefined, { shallow: true });
-                    }}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                  >
-                    ← Back to List
-                  </button>
                 </div>
                 
                 {/* Basic Info */}
