@@ -39,5 +39,6 @@ yarn-error.log*
 # OS generated files
 Thumbs.db
 
-# App documentation (contains sensitive info)
-data/app_info.mb 
+# App documentation and internal data (contains sensitive info)
+data/
+!data/.gitkeep
