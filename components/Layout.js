@@ -61,17 +61,6 @@ export default function Layout({ children }) {
               >
                 Dashboard
               </Link>
-              
-              <Link 
-                href="/schema-workflow" 
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  router.pathname === '/schema-workflow' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Schema Workflow
-              </Link>
 
               {/* User Menu */}
               <div className="flex items-center space-x-4">
