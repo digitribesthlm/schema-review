@@ -13,6 +13,7 @@ export default function SchemaWorkflow() {
   const [editorHeight, setEditorHeight] = useState(400);
   const textareaRef = useRef(null);
   const gutterRef = useRef(null);
+  const pageContainerRef = useRef(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -30,6 +31,22 @@ export default function SchemaWorkflow() {
       }
     }
   }, [router.query, pages]);
+
+  // Keyboard shortcut: Cmd/Ctrl+S to save
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      const isMac = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+      const saveCombo = (isMac && e.metaKey && e.key.toLowerCase() === 's') || (!isMac && e.ctrlKey && e.key.toLowerCase() === 's');
+      if (saveCombo) {
+        e.preventDefault();
+        if (schemaJson && selectedPage && !saving) {
+          saveSchema();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [schemaJson, selectedPage, saving]);
 
   // Auto-size editor height (up to 70vh) and keep gutter in sync
   useEffect(() => {
@@ -441,6 +458,7 @@ export default function SchemaWorkflow() {
                         className="flex-1 p-3 font-mono text-sm outline-none leading-5"
                         placeholder="Paste your Schema.org JSON-LD here..."
                         style={{ height: editorHeight, lineHeight: '1.25rem', whiteSpace: 'pre', overflowY: 'auto' }}
+                        data-testid="schema-json-textarea"
                       />
                     </div>
                   </div>
@@ -448,6 +466,7 @@ export default function SchemaWorkflow() {
                     onClick={saveSchema}
                     disabled={saving || !schemaJson}
                     className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    data-testid="save-schema-button"
                   >
                     {saving ? 'Saving...' : 'Save Schema'}
                   </button>
