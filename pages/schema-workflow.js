@@ -10,6 +10,12 @@ export default function SchemaWorkflow() {
   const [schemaJson, setSchemaJson] = useState('');
   const [saving, setSaving] = useState(false);
   const [editorFullscreen, setEditorFullscreen] = useState(false);
+  const [contentFlags, setContentFlags] = useState([]);
+  const [showFlagForm, setShowFlagForm] = useState(false);
+  const [flagField, setFlagField] = useState('');
+  const [flagIssue, setFlagIssue] = useState('');
+  const [flagSource, setFlagSource] = useState('');
+  const [flagSaving, setFlagSaving] = useState(false);
   const [editorHeight, setEditorHeight] = useState(400);
   const textareaRef = useRef(null);
   const gutterRef = useRef(null);
@@ -98,10 +104,90 @@ export default function SchemaWorkflow() {
 
   const handlePageSelect = async (page) => {
     setSelectedPage(page);
+    setContentFlags(page.contentFlags || []);
+    setShowFlagForm(false);
+    setFlagField('');
+    setFlagIssue('');
+    setFlagSource('');
     if (page.schema_body) {
       setSchemaJson(unwrapSchemaBody(page.schema_body));
     } else {
       setSchemaJson('');
+    }
+  };
+
+  const addContentFlag = async () => {
+    if (!selectedPage || !flagField || !flagIssue) return;
+    setFlagSaving(true);
+    try {
+      const response = await fetch('/api/schema-workflow/content-flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_id: selectedPage._id,
+          field: flagField,
+          issue: flagIssue,
+          source: flagSource
+        })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setContentFlags(prev => [...prev, data.flag]);
+        setFlagField('');
+        setFlagIssue('');
+        setFlagSource('');
+        setShowFlagForm(false);
+      } else {
+        alert('Error saving flag');
+      }
+    } catch (error) {
+      console.error('Error adding flag:', error);
+      alert('Error saving flag');
+    } finally {
+      setFlagSaving(false);
+    }
+  };
+
+  const resolveFlag = async (flagId, currentStatus) => {
+    if (!selectedPage) return;
+    const newStatus = currentStatus === 'resolved' ? 'open' : 'resolved';
+    try {
+      const response = await fetch('/api/schema-workflow/content-flags', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_id: selectedPage._id,
+          flag_id: flagId,
+          status: newStatus
+        })
+      });
+      if (response.ok) {
+        setContentFlags(prev => prev.map(f =>
+          f.id === flagId ? { ...f, status: newStatus, resolved_at: newStatus === 'resolved' ? new Date() : null } : f
+        ));
+      } else {
+        alert('Error updating flag');
+      }
+    } catch (error) {
+      console.error('Error resolving flag:', error);
+    }
+  };
+
+  const deleteFlag = async (flagId) => {
+    if (!selectedPage || !confirm('Delete this flag?')) return;
+    try {
+      const response = await fetch('/api/schema-workflow/content-flags', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_id: selectedPage._id, flag_id: flagId })
+      });
+      if (response.ok) {
+        setContentFlags(prev => prev.filter(f => f.id !== flagId));
+      } else {
+        alert('Error deleting flag');
+      }
+    } catch (error) {
+      console.error('Error deleting flag:', error);
     }
   };
 
@@ -625,6 +711,139 @@ export default function SchemaWorkflow() {
                     </div>
                   </div>
                 )}
+
+                {/* Content Flags */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-medium">
+                      Content Flags
+                      {contentFlags.filter(f => f.status === 'open').length > 0 && (
+                        <span className="ml-2 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs rounded-full">
+                          {contentFlags.filter(f => f.status === 'open').length} open
+                        </span>
+                      )}
+                    </h3>
+                    <button
+                      onClick={() => setShowFlagForm(!showFlagForm)}
+                      className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600"
+                    >
+                      + Add Flag
+                    </button>
+                  </div>
+
+                  {/* Add flag form */}
+                  {showFlagForm && (
+                    <div className="mb-3 p-3 border border-orange-200 rounded-lg bg-orange-50">
+                      <div className="mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Schema Field / Section *</label>
+                        <input
+                          type="text"
+                          value={flagField}
+                          onChange={e => setFlagField(e.target.value)}
+                          placeholder="e.g. description, Q2 answer, component list"
+                          className="w-full px-2 py-1 text-sm border rounded"
+                        />
+                      </div>
+                      <div className="mb-2">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Issue Description *</label>
+                        <textarea
+                          value={flagIssue}
+                          onChange={e => setFlagIssue(e.target.value)}
+                          placeholder="Describe what is factually wrong or missing compared to the live page..."
+                          className="w-full px-2 py-1 text-sm border rounded"
+                          rows={3}
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Source / Evidence (optional)</label>
+                        <input
+                          type="text"
+                          value={flagSource}
+                          onChange={e => setFlagSource(e.target.value)}
+                          placeholder="e.g. Live page section heading or quote"
+                          className="w-full px-2 py-1 text-sm border rounded"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={addContentFlag}
+                          disabled={flagSaving || !flagField || !flagIssue}
+                          className="px-3 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50"
+                        >
+                          {flagSaving ? 'Saving...' : 'Save Flag'}
+                        </button>
+                        <button
+                          onClick={() => setShowFlagForm(false)}
+                          className="px-3 py-1 text-xs border rounded hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Flag list */}
+                  {contentFlags.length === 0 ? (
+                    <p className="text-xs text-gray-500">No content flags yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {contentFlags.map((flag) => (
+                        <div
+                          key={flag.id}
+                          className={`p-3 rounded-lg border text-sm ${
+                            flag.status === 'resolved'
+                              ? 'bg-green-50 border-green-200'
+                              : 'bg-orange-50 border-orange-200'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-xs uppercase tracking-wide text-gray-500">Field:</span>
+                                <span className="font-medium">{flag.field}</span>
+                                <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+                                  flag.status === 'resolved'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {flag.status}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 mb-1">{flag.issue}</p>
+                              {flag.source && (
+                                <p className="text-xs text-gray-500 italic">Source: {flag.source}</p>
+                              )}
+                              <p className="text-xs text-gray-400 mt-1">
+                                Added {new Date(flag.created_at).toLocaleDateString()}
+                                {flag.resolved_at && ` · Resolved ${new Date(flag.resolved_at).toLocaleDateString()}`}
+                              </p>
+                            </div>
+                            <div className="flex gap-1 shrink-0">
+                              <button
+                                onClick={() => resolveFlag(flag.id, flag.status)}
+                                className={`px-2 py-1 text-xs rounded ${
+                                  flag.status === 'resolved'
+                                    ? 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                                    : 'bg-green-100 hover:bg-green-200 text-green-700'
+                                }`}
+                                title={flag.status === 'resolved' ? 'Reopen' : 'Mark resolved'}
+                              >
+                                {flag.status === 'resolved' ? 'Reopen' : '✓ Resolve'}
+                              </button>
+                              <button
+                                onClick={() => deleteFlag(flag.id)}
+                                className="px-2 py-1 text-xs bg-red-50 hover:bg-red-100 text-red-600 rounded"
+                                title="Delete flag"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Comments */}
                 {selectedPage.comments && selectedPage.comments.length > 0 && (
