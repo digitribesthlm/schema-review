@@ -14,6 +14,7 @@
  * {
  *   "page_id": "<MongoDB ObjectId string>",          // required
  *   "schema_body": { ... } | "<json string>",        // optional – inserts/replaces schema
+ *   "status": "draft" | "pending" | ...,             // optional – override page status
  *   "content_flags": [                               // optional – appends flags
  *     {
  *       "field": "description",                      // required – which schema field/section
@@ -55,14 +56,14 @@ export default async function handler(req, res) {
   }
 
   // ── Validate body ─────────────────────────────────────────────────────────
-  const { page_id, schema_body, content_flags } = req.body;
+  const { page_id, schema_body, content_flags, status } = req.body;
 
   if (!page_id) {
     return res.status(400).json({ message: 'Missing required field: page_id' });
   }
 
-  if (!schema_body && (!content_flags || content_flags.length === 0)) {
-    return res.status(400).json({ message: 'Nothing to do: provide schema_body and/or content_flags' });
+  if (!schema_body && (!content_flags || content_flags.length === 0) && !status) {
+    return res.status(400).json({ message: 'Nothing to do: provide schema_body, content_flags, and/or status' });
   }
 
   // Validate content_flags structure if provided
@@ -112,9 +113,14 @@ export default async function handler(req, res) {
         }
       }
       updateOps.$set.schema_body = schema_body;
-      updateOps.$set.status = 'pending';
+      updateOps.$set.status = status || 'draft';
       updateOps.$set.schema_created_at = new Date();
       schemaUpdated = true;
+    }
+
+    // ── Status override (without schema update) ─────────────────────────
+    if (status && !schema_body) {
+      updateOps.$set.status = status;
     }
 
     // ── Content flags ─────────────────────────────────────────────────────
