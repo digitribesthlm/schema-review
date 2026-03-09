@@ -23,7 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Local env files
+# Environment files (all variants — keeps secrets out of the repo)
+.env
+.env.*
 .env*.local
 
 # Vercel
@@ -42,3 +44,8 @@ Thumbs.db
 # App documentation and internal data (contains sensitive info)
 data/
 !data/.gitkeep
+
+# Customer-specific one-off scripts (contain hardcoded client data)
+scripts/generate_nl_schemas.py
+scripts/populate-schema-workflow.js
+scripts/generate-editable-fields.js
