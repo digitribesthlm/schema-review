@@ -11,14 +11,14 @@ export default async function handler(req, res) {
   try {
     // Get user info from cookie (no more JWT)
     let userInfo = null;
-    
+
     if (req.headers.cookie) {
       const cookies = req.headers.cookie.split(';').reduce((acc, cookie) => {
         const [key, value] = cookie.trim().split('=');
         acc[key] = value;
         return acc;
       }, {});
-      
+
       if (cookies.user) {
         try {
           userInfo = JSON.parse(decodeURIComponent(cookies.user));
@@ -29,11 +29,11 @@ export default async function handler(req, res) {
     }
 
     await client.connect();
-    const db = client.db('agency');
+    const db = client.db(process.env.MONGODB_DB || 'agency');
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
-    
+
     const { page_id, status, notes } = req.body;
-    
+
     if (!page_id || !status) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -60,12 +60,12 @@ export default async function handler(req, res) {
     }
 
     const result = await collection.updateOne(filter, { $set: updateData });
-    
+
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: 'Page not found or access denied' });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       message: `Schema ${status} successfully`,
       result: result
     });

@@ -17,10 +17,10 @@ export default function PageDetails() {
   const fetchPageDetails = async () => {
     try {
       setLoading(true);
-      
+
       const response = await fetch(`/api/schema-workflow/pages?filter=all`);
       const pages = await response.json();
-      
+
       // Find the specific page by ID
       const foundPage = pages.find(p => p._id === id);
       if (foundPage) {
@@ -129,24 +129,24 @@ export default function PageDetails() {
                     <label className="block text-sm font-medium text-gray-700">Page Title</label>
                     <p className="mt-1 text-sm text-gray-900">{page.page_title || 'No title'}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">URL</label>
-                    <a 
-                      href={page.url} 
-                      target="_blank" 
+                    <a
+                      href={page.url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="mt-1 text-sm text-blue-600 hover:underline break-all"
                     >
                       {page.url}
                     </a>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Page ID</label>
                     <p className="mt-1 text-sm text-gray-900 font-mono">{page._id}</p>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Status</label>
                     <div className="mt-1 flex items-center space-x-2">
@@ -171,7 +171,7 @@ export default function PageDetails() {
                       <p className="mt-1 text-sm text-gray-900">{page.bq_main_topic}</p>
                     </div>
                   )}
-                  
+
                   {page.content_summary && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Content Summary</label>
@@ -240,17 +240,57 @@ export default function PageDetails() {
               </div>
 
               {/* Schema Information */}
-              {page.schema_body && (
-                <div className="bg-white rounded-lg shadow p-6">
-                  <h2 className="text-lg font-medium text-gray-900 mb-4">Schema JSON-LD</h2>
-                  <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-auto max-h-64">
-                    {typeof page.schema_body === 'string' 
-                      ? page.schema_body 
-                      : JSON.stringify(page.schema_body, null, 2)
+              {page.schema_body && (() => {
+                // Unwrap double-serialized schema_body
+                const unwrap = (body) => {
+                  try {
+                    let parsed = typeof body === 'string' ? JSON.parse(body) : body;
+                    while (parsed && typeof parsed['@graph'] === 'string') {
+                      parsed = JSON.parse(parsed['@graph']);
                     }
-                  </pre>
-                </div>
-              )}
+                    return JSON.stringify(parsed, null, 2);
+                  } catch { return typeof body === 'string' ? body : JSON.stringify(body, null, 2); }
+                };
+                const formatted = unwrap(page.schema_body);
+
+                // Syntax highlight: keys, strings, numbers, booleans
+                const highlight = (json) => json
+                  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                  .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+                    let cls = 'color:#0077cc'; // number
+                    if (/^"/.test(match)) {
+                      if (/:$/.test(match)) cls = 'color:#8b008b;font-weight:600'; // key
+                      else cls = 'color:#2e7d32'; // string
+                    } else if (/true|false/.test(match)) cls = 'color:#e65100';
+                    else if (/null/.test(match)) cls = 'color:#999';
+                    return `<span style="${cls}">${match}</span>`;
+                  });
+
+                return (
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-lg font-medium text-gray-900">Schema JSON-LD</h2>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(formatted)}
+                        className="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 text-gray-600"
+                      >
+                        📋 Copy
+                      </button>
+                    </div>
+                    <div className="border rounded-lg overflow-hidden bg-gray-50">
+                      <div className="px-3 py-1.5 bg-gray-100 border-b text-xs text-gray-500 flex justify-between">
+                        <span>JSON-LD · schema.org</span>
+                        <span>{formatted.split('\n').length} lines</span>
+                      </div>
+                      <pre
+                        className="p-4 text-xs overflow-auto font-mono leading-5"
+                        style={{ maxHeight: '420px', whiteSpace: 'pre' }}
+                        dangerouslySetInnerHTML={{ __html: highlight(formatted) }}
+                      />
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Comments */}
               {page.comments && page.comments.length > 0 && (

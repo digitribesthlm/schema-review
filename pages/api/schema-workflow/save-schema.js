@@ -10,11 +10,11 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    const db = client.db('agency');
+    const db = client.db(process.env.MONGODB_DB || 'agency');
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
-    
+
     const { page_id, schema_body, status } = req.body;
-    
+
     if (!page_id || !schema_body) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -40,12 +40,12 @@ export default async function handler(req, res) {
       { _id: new ObjectId(page_id) },
       { $set: updateData }
     );
-    
+
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: 'Page not found' });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       message: 'Schema saved successfully',
       result: result
     });

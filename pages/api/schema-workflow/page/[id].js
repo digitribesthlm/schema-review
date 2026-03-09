@@ -20,7 +20,7 @@ export default async function handler(req, res) {
       if (cookies.user) {
         try {
           userInfo = JSON.parse(decodeURIComponent(cookies.user))
-        } catch {}
+        } catch { }
       }
     }
 
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     await client.connect()
-    const db = client.db('agency')
+    const db = client.db(process.env.MONGODB_DB || 'agency')
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow')
 
     const page = await collection.findOne({

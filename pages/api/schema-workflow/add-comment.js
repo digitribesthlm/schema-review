@@ -10,11 +10,11 @@ export default async function handler(req, res) {
 
   try {
     await client.connect();
-    const db = client.db('agency');
+    const db = client.db(process.env.MONGODB_DB || 'agency');
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
-    
+
     const { page_id, comment } = req.body;
-    
+
     if (!page_id || !comment) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
@@ -27,17 +27,17 @@ export default async function handler(req, res) {
 
     const result = await collection.updateOne(
       { _id: page_id },
-      { 
+      {
         $push: { comments: commentData },
         $set: { updated_at: new Date() }
       }
     );
-    
+
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: 'Page not found' });
     }
-    
-    res.status(200).json({ 
+
+    res.status(200).json({
       message: 'Comment added successfully',
       result: result
     });

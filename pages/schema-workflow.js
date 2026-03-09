@@ -83,17 +83,23 @@ export default function SchemaWorkflow() {
     }
   };
 
+  const unwrapSchemaBody = (body) => {
+    try {
+      let parsed = typeof body === 'string' ? JSON.parse(body) : body;
+      // If @graph is itself a string (double-serialized), unwrap it
+      while (parsed && typeof parsed['@graph'] === 'string') {
+        parsed = JSON.parse(parsed['@graph']);
+      }
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return typeof body === 'string' ? body : JSON.stringify(body, null, 2);
+    }
+  };
+
   const handlePageSelect = async (page) => {
     setSelectedPage(page);
-    // Handle schema_body as string (new unified structure)
     if (page.schema_body) {
-      // If it's already a string, use it directly
-      if (typeof page.schema_body === 'string') {
-        setSchemaJson(page.schema_body);
-      } else {
-        // If it's an object, stringify it
-        setSchemaJson(JSON.stringify(page.schema_body, null, 2));
-      }
+      setSchemaJson(unwrapSchemaBody(page.schema_body));
     } else {
       setSchemaJson('');
     }
@@ -270,9 +276,8 @@ export default function SchemaWorkflow() {
                 {pages.map((page) => (
                   <div
                     key={page._id}
-                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                      selectedPage?._id === page._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
-                    }`}
+                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${selectedPage?._id === page._id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      }`}
                     onClick={() => handlePageSelect(page)}
                   >
                     <div className="flex justify-between items-start">
@@ -301,7 +306,7 @@ export default function SchemaWorkflow() {
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Page Details</h2>
                 </div>
-                
+
                 {/* Basic Info */}
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Page Title</h3>
@@ -310,9 +315,9 @@ export default function SchemaWorkflow() {
 
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">URL</h3>
-                  <a 
-                    href={selectedPage.url} 
-                    target="_blank" 
+                  <a
+                    href={selectedPage.url}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline text-sm break-all"
                   >
@@ -354,9 +359,9 @@ export default function SchemaWorkflow() {
                       const importance = parseFloat(keyword.importance || 0);
                       const relevanceScore = (importance * 100).toFixed(0);
                       const keywordText = keyword.term || keyword.name || 'Unknown';
-                      
+
                       return (
-                        <span 
+                        <span
                           key={index}
                           className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
                           title={`Relevance Score: ${relevanceScore}/100`}
@@ -386,17 +391,16 @@ export default function SchemaWorkflow() {
                       // Handle both string and number importance values
                       const importance = parseFloat(entity.importance || 0);
                       const relevanceScore = (importance * 100).toFixed(0);
-                      
+
                       return (
-                        <span 
+                        <span
                           key={index}
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            entity.type === 'organization' ? 'bg-purple-100 text-purple-800' :
+                          className={`px-2 py-1 rounded-full text-xs ${entity.type === 'organization' ? 'bg-purple-100 text-purple-800' :
                             entity.type === 'product' ? 'bg-green-100 text-green-800' :
-                            entity.type === 'person' ? 'bg-yellow-100 text-yellow-800' :
-                            entity.type === 'concept' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}
+                              entity.type === 'person' ? 'bg-yellow-100 text-yellow-800' :
+                                entity.type === 'concept' ? 'bg-blue-100 text-blue-800' :
+                                  'bg-gray-100 text-gray-800'
+                            }`}
                           title={`Type: ${entity.type}, Relevance: ${relevanceScore}/100`}
                         >
                           {entity.name} ({entity.type})
@@ -519,7 +523,7 @@ export default function SchemaWorkflow() {
                     <div className="mb-4">
                       <span className="text-green-600 font-medium">✓ Schema Available</span>
                     </div>
-                    
+
                     {/* Review Actions */}
                     <div className="mt-4">
                       <div className="mb-3">
@@ -594,9 +598,8 @@ export default function SchemaWorkflow() {
                         </div>
                         <div>
                           <span className="font-medium text-gray-600">Decision:</span>
-                          <div className={`font-medium ${
-                            selectedPage.review_decision === 'approved' ? 'text-green-600' : 'text-red-600'
-                          }`}>
+                          <div className={`font-medium ${selectedPage.review_decision === 'approved' ? 'text-green-600' : 'text-red-600'
+                            }`}>
                             {selectedPage.review_decision === 'approved' ? '✅ Approved' : '❌ Rejected'}
                           </div>
                         </div>
@@ -630,7 +633,7 @@ export default function SchemaWorkflow() {
                     <div className="space-y-2">
                       {selectedPage.comments.map((comment, index) => (
                         <div key={index} className="p-2 bg-gray-100 rounded text-sm">
-                          {comment.text} 
+                          {comment.text}
                           <span className="text-gray-500 ml-2">
                             - {new Date(comment.date).toLocaleDateString()}
                           </span>
