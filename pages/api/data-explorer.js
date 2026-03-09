@@ -9,8 +9,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    const dbName = process.env.MONGODB_DB
+    if (!dbName) {
+      throw new Error('MONGODB_DB environment variable is not set')
+    }
     await client.connect()
-    const db = client.db('agency')
+    const db = client.db(dbName)
     const collection = db.collection('schema_definitions')
 
     // Get all schema definitions with basic sorting

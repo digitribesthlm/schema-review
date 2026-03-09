@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     }
 
     await client.connect();
-    const db = client.db(process.env.MONGODB_DB || 'agency');
+    const db = client.db(process.env.MONGODB_DB);
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
 
     const { page_id, status, notes } = req.body;

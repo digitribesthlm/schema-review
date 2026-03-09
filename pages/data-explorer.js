@@ -84,7 +84,7 @@ export default function DataExplorer() {
           <div className="flex justify-between items-center py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Schema Data Explorer</h1>
-              <p className="text-gray-600">Raw data from agency.schema_definitions collection</p>
+              <p className="text-gray-600">Raw data from schema_definitions collection</p>
             </div>
             <button
               onClick={() => router.push('/dashboard')}
