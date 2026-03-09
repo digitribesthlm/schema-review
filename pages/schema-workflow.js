@@ -21,7 +21,7 @@ export default function SchemaWorkflow() {
     checkUserRole();
   }, [filter]);
 
-  // Auto-select page if page parameter is provided
+  // Auto-select page if page parameter is provided.
   useEffect(() => {
     const { page } = router.query;
     if (page && pages.length > 0) {
