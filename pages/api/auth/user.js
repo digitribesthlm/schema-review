@@ -4,22 +4,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // For demo purposes, we'll determine role based on email
-    // In production, this should check JWT tokens or session data
-    const userEmail = req.headers['user-email'] || 'manus@manus.com';
-    
+    const userEmail = req.headers['user-email'] || '';
+
     let role = 'client';
-    
-    // Admin users (you can expand this list)
-    const adminEmails = [
-      'manus@manus.com',
-      'admin@digitribe.se'
-    ];
-    
+
+    // Admin users defined in environment variables
+    const adminEmails = process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',').map(e => e.trim()) : [];
+
     if (adminEmails.includes(userEmail)) {
       role = 'admin';
     }
-    
+
     res.status(200).json({
       email: userEmail,
       role: role,
