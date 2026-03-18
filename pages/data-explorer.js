@@ -91,20 +91,12 @@ export default function DataExplorer() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Schema Data Explorer</h1>
-              <p className="text-gray-600">Raw data from schema_definitions collection</p>
-            </div>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              Back to Dashboard
-            </button>
+      {/* Page Title */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Schema Data Explorer</h1>
+            <p className="text-gray-600">Raw data from schema_definitions collection</p>
           </div>
         </div>
       </div>

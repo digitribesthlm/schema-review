@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 
+// Pages that render their own full navbar — Layout should not add a second one
+const PAGES_WITH_OWN_NAVBAR = [
+  '/dashboard/[clientId]',
+  '/ai-reviewer',
+];
+
 export default function Layout({ children }) {
   const [user, setUser] = useState(null);
   const router = useRouter();
@@ -23,6 +29,8 @@ export default function Layout({ children }) {
   };
 
   const logout = () => {
+    // Clear the user session cookie
+    document.cookie = 'user=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
     localStorage.removeItem('token');
     setUser(null);
     router.push('/login');
@@ -31,6 +39,12 @@ export default function Layout({ children }) {
   // Don't show navigation on login page
   if (router.pathname === '/login') {
     return children;
+  }
+
+  // Don't show Layout navbar on pages that have their own full navbar
+  const hasOwnNavbar = PAGES_WITH_OWN_NAVBAR.includes(router.pathname);
+  if (hasOwnNavbar) {
+    return <>{children}</>;
   }
 
   // Always show layout with navigation

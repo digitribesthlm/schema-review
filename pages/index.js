@@ -73,15 +73,6 @@ export default function Dashboard() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Schema Dashboard</h1>
-            </div>
-          </div>
-        </div>
-
         {/* Stats */}
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="grid grid-cols-4 gap-4 mb-8">

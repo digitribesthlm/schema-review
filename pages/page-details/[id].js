@@ -109,28 +109,26 @@ export default function PageDetails() {
       </Head>
 
       <div className="bg-gray-50">
-        {/* Header */}
-        <div className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Page Details</h1>
-                <p className="text-gray-600">{page.page_title || 'Untitled Page'}</p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={() => router.push('/')}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Back to Dashboard
-                </button>
-                <button
-                  onClick={() => router.push(`/schema-workflow?page=${page._id}`)}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                >
-                  Edit Schema
-                </button>
-              </div>
+        {/* Page Title */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Page Details</h1>
+              <p className="text-gray-600">{page.page_title || 'Untitled Page'}</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.push('/')}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Back to Dashboard
+              </button>
+              <button
+                onClick={() => router.push(`/schema-workflow?page=${page._id}`)}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+              >
+                Edit Schema
+              </button>
             </div>
           </div>
         </div>
