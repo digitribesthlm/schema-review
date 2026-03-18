@@ -6,11 +6,28 @@ export default function Dashboard() {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
-    fetchPages();
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify');
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        fetchPages();
+      } else {
+        router.push('/login');
+      }
+    } catch (error) {
+      router.push('/login');
+    }
+  };
 
   const fetchPages = async () => {
     try {
