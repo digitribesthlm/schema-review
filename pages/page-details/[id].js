@@ -7,12 +7,30 @@ export default function PageDetails() {
   const { id } = router.query;
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    if (id) {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (id && authenticated) {
       fetchPageDetails();
     }
-  }, [id]);
+  }, [id, authenticated]);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify');
+      if (response.ok) {
+        setAuthenticated(true);
+      } else {
+        router.push('/login');
+      }
+    } catch (error) {
+      router.push('/login');
+    }
+  };
 
   const fetchPageDetails = async () => {
     try {

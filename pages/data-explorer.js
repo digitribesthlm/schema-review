@@ -11,8 +11,21 @@ export default function DataExplorer() {
   const router = useRouter()
 
   useEffect(() => {
-    fetchSchemas()
+    checkAuth()
   }, [])
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify')
+      if (response.ok) {
+        fetchSchemas()
+      } else {
+        router.push('/login')
+      }
+    } catch (error) {
+      router.push('/login')
+    }
+  }
 
   const fetchSchemas = async () => {
     try {

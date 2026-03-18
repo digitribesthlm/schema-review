@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 export default function SchemaWorkflow() {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('');
   const [filter, setFilter] = useState('all'); // all, no_schema, pending, approved
   const [selectedPage, setSelectedPage] = useState(null);
@@ -23,9 +24,15 @@ export default function SchemaWorkflow() {
   const router = useRouter();
 
   useEffect(() => {
-    fetchPages();
-    checkUserRole();
-  }, [filter]);
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchPages();
+      checkUserRole();
+    }
+  }, [filter, user]);
 
   // Auto-select page if page parameter is provided.
   useEffect(() => {
@@ -66,6 +73,20 @@ export default function SchemaWorkflow() {
     window.addEventListener('resize', adjustHeight);
     return () => window.removeEventListener('resize', adjustHeight);
   }, [schemaJson]);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify');
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+      } else {
+        router.push('/login');
+      }
+    } catch (error) {
+      router.push('/login');
+    }
+  };
 
   const fetchPages = async () => {
     try {
