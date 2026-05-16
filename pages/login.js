@@ -13,7 +13,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
-    
+
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
@@ -42,7 +42,7 @@ export default function Login() {
       <Head>
         <title>Login - Schema Review System</title>
       </Head>
-      
+
       <div className="min-h-screen bg-hubspot-light flex items-center justify-center p-4">
         <div className="max-w-md w-full">
           {/* Header */}
@@ -64,7 +64,7 @@ export default function Login() {
               {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="form-label">Email Address</label>
+                  <label className="form-label">Email Address:</label>
                   <input
                     type="email"
                     className="form-input"
@@ -89,8 +89,8 @@ export default function Login() {
                   />
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className={`btn-primary w-full ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   disabled={loading}
                 >
