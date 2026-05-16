@@ -7,11 +7,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
   const [user, setUser] = useState(null);
+  const [langFilter, setLangFilter] = useState('all');
   const router = useRouter();
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) fetchPages();
+  }, [langFilter]);
 
   const checkAuth = async () => {
     try {
@@ -32,9 +37,11 @@ export default function Dashboard() {
   const fetchPages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/schema-workflow/pages');
+      const params = new URLSearchParams();
+      if (langFilter !== 'all') params.set('lang', langFilter);
+      const response = await fetch(`/api/schema-workflow/pages?${params}`);
       const data = await response.json();
-      
+
       setPages(data);
       setStats({
         total: data.length,
@@ -47,6 +54,25 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const uniqueLanguages = () => {
+    const langs = new Set();
+    pages.forEach(p => {
+      if (p.page_language && Array.isArray(p.page_language)) {
+        p.page_language.forEach(l => langs.add(l));
+      }
+    });
+    return [...langs].sort();
+  };
+
+  const getLangLabel = (langCode) => {
+    const labels = {
+      en: 'EN', nl: 'NL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT',
+      pt: 'PT', ru: 'RU', zh: 'ZH', ja: 'JA', ko: 'KO', ar: 'AR',
+      tr: 'TR', pl: 'PL', sv: 'SV', da: 'DA', no: 'NO', fi: 'FI'
+    };
+    return labels[langCode] || langCode.toUpperCase();
   };
 
   const getStatusColor = (status) => {
@@ -96,8 +122,18 @@ export default function Dashboard() {
 
           {/* Simple Page List */}
           <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
               <h2 className="text-lg font-medium">Pages</h2>
+              <select
+                value={langFilter}
+                onChange={(e) => setLangFilter(e.target.value)}
+                className="px-3 py-1.5 border rounded-lg text-sm"
+              >
+                <option value="all">All Languages</option>
+                {uniqueLanguages().map(lang => (
+                  <option key={lang} value={lang}>{getLangLabel(lang)}</option>
+                ))}
+              </select>
             </div>
             <div className="divide-y">
               {pages.map((page) => (
@@ -118,6 +154,11 @@ export default function Dashboard() {
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(page.status)}`}>
                       {page.status || 'next'}
                     </span>
+                    {page.page_language && page.page_language.length > 0 && page.page_language.map(l => (
+                      <span key={l} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                        {getLangLabel(l)}
+                      </span>
+                    ))}
                     {page.schema_body && (
                       <span className="text-green-600 text-sm">✓ Schema</span>
                     )}

@@ -26,11 +26,11 @@ export default async function handler(req, res) {
     const db = client.db(process.env.MONGODB_DB);
     const collection = db.collection(process.env.DATA_COLLECTION || 'schema_workflow');
     
-    const { filter } = req.query;
-    
+    const { filter, lang } = req.query;
+
     // Organization isolation: Users only see their organization's data
     let query = {};
-    
+
     // Filter by client_id for organization separation
     // JWT token uses 'clientId' (camelCase), but database uses 'client_id' (snake_case)
     console.log('[schema-workflow] User info from JWT:', userInfo);
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     } else {
       console.log('[schema-workflow] No clientId in JWT token - no data isolation');
     }
-    
+
     // Add status filters
     switch (filter) {
       case 'no_schema':
@@ -63,8 +63,43 @@ export default async function handler(req, res) {
     console.log('[schema-workflow] Final query:', JSON.stringify(query, null, 2));
     const pages = await collection.find(query).sort({ _id: -1 }).toArray();
     console.log('[schema-workflow] Found pages:', pages.length);
-    
-    res.status(200).json(pages);
+
+    // Extract inLanguage from schema_body and compute page_language for each page
+    const pagesWithLang = pages.map(page => {
+      const doc = { ...page };
+      doc.page_language = null;
+      if (doc.schema_body) {
+        try {
+          const schema = typeof doc.schema_body === 'string' ? JSON.parse(doc.schema_body) : doc.schema_body;
+          let inLanguage = schema.inLanguage;
+          // Handle @graph structure — find WebPage or the first node with inLanguage
+          if (!inLanguage && schema['@graph'] && Array.isArray(schema['@graph'])) {
+            for (const node of schema['@graph']) {
+              if (node.inLanguage) {
+                inLanguage = node.inLanguage;
+                break;
+              }
+            }
+          }
+          if (inLanguage) {
+            doc.page_language = Array.isArray(inLanguage) ? inLanguage : [inLanguage];
+          }
+        } catch {
+          // schema_body couldn't be parsed — leave page_language as null
+        }
+      }
+      return doc;
+    });
+
+    // Apply language filter if provided (post-query, since it's computed)
+    let result = pagesWithLang;
+    if (lang && lang !== 'all') {
+      result = pagesWithLang.filter(p =>
+        p.page_language && p.page_language.includes(lang)
+      );
+    }
+
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error fetching pages:', error);
     res.status(500).json({ message: 'Internal server error' });

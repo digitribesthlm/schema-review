@@ -7,6 +7,7 @@ export default function SchemaWorkflow() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState('');
   const [filter, setFilter] = useState('all'); // all, no_schema, pending, approved
+  const [langFilter, setLangFilter] = useState('all'); // all, en, nl, etc.
   const [selectedPage, setSelectedPage] = useState(null);
   const [schemaJson, setSchemaJson] = useState('');
   const [saving, setSaving] = useState(false);
@@ -32,7 +33,7 @@ export default function SchemaWorkflow() {
       fetchPages();
       checkUserRole();
     }
-  }, [filter, user]);
+  }, [filter, langFilter, user]);
 
   // Auto-select page if page parameter is provided.
   useEffect(() => {
@@ -90,7 +91,9 @@ export default function SchemaWorkflow() {
 
   const fetchPages = async () => {
     try {
-      const response = await fetch(`/api/schema-workflow/pages?filter=${filter}`);
+      const params = new URLSearchParams({ filter });
+      if (langFilter !== 'all') params.set('lang', langFilter);
+      const response = await fetch(`/api/schema-workflow/pages?${params}`);
       const data = await response.json();
       setPages(data);
     } catch (error) {
@@ -328,6 +331,27 @@ export default function SchemaWorkflow() {
     }
   };
 
+  const uniqueLanguages = () => {
+    const langs = new Set();
+    pages.forEach(p => {
+      if (p.page_language && Array.isArray(p.page_language)) {
+        p.page_language.forEach(l => langs.add(l));
+      }
+    });
+    return [...langs].sort();
+  };
+
+  const getLangLabel = (langCode) => {
+    const labels = {
+      en: 'EN', nl: 'NL', de: 'DE', fr: 'FR', es: 'ES', it: 'IT',
+      pt: 'PT', ru: 'RU', zh: 'ZH', ja: 'JA', ko: 'KO', ar: 'AR',
+      tr: 'TR', pl: 'PL', sv: 'SV', da: 'DA', no: 'NO', fi: 'FI',
+      cs: 'CS', hu: 'HU', ro: 'RO', bg: 'BG', el: 'EL', he: 'HE',
+      th: 'TH', vi: 'VI', id: 'ID', ms: 'MS', hi: 'HI'
+    };
+    return labels[langCode] || langCode.toUpperCase();
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'text-green-600 bg-green-100';
@@ -371,6 +395,16 @@ export default function SchemaWorkflow() {
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
+            <select
+              value={langFilter}
+              onChange={(e) => setLangFilter(e.target.value)}
+              className="px-4 py-2 border rounded-lg"
+            >
+              <option value="all">All Languages</option>
+              {uniqueLanguages().map(lang => (
+                <option key={lang} value={lang}>{getLangLabel(lang)}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -398,6 +432,15 @@ export default function SchemaWorkflow() {
                         <div className={`mt-1 px-2 py-1 rounded-full text-xs ${getStatusColor(page.status)}`}>
                           {page.status || 'next'}
                         </div>
+                        {page.page_language && page.page_language.length > 0 && (
+                          <div className="flex gap-1 mt-1 justify-end">
+                            {page.page_language.map(l => (
+                              <span key={l} className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                                {getLangLabel(l)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -435,6 +478,21 @@ export default function SchemaWorkflow() {
                 <div className="mb-6">
                   <h3 className="font-medium mb-2">Main Topic</h3>
                   <p className="text-sm text-gray-700">{selectedPage.bq_main_topic || selectedPage.main_topic || 'No topic available'}</p>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Language</h3>
+                  {selectedPage.page_language && selectedPage.page_language.length > 0 ? (
+                    <div className="flex gap-1">
+                      {selectedPage.page_language.map(l => (
+                        <span key={l} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
+                          {getLangLabel(l)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No language data (schema not yet created)</p>
+                  )}
                 </div>
 
                 <div className="mb-6">
